@@ -1,0 +1,52 @@
+import { API_BASE_URL } from './config';
+import { getAccessToken, setAccessToken, clearSession } from '../hooks/auth-client';
+
+async function core(path: string, init: RequestInit & { _retry?: boolean } = {}) {
+  const token = await getAccessToken();
+  const headers = new Headers(init.headers || {});
+  headers.set('Accept', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  });
+
+  if (res.status === 401 && !init._retry) {
+    const ok = await refresh();
+    if (ok) return core(path, { ...init, _retry: true });
+    await clearSession();
+  }
+
+  if (!res.ok) {
+    const msg = await readMessage(res);
+    throw new Error(msg || `HTTP ${res.status}`);
+  }
+
+  return res.status === 204 ? null : res.json();
+}
+
+async function refresh() {
+  try {
+    const r = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!r.ok) return false;
+    const data = (await r.json()) as { token: string; expiresIn: string | number };
+    await setAccessToken(data.token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readMessage(res: Response) {
+  try {
+    const j = await res.json();
+    return j?.message || j?.error || '';
+  } catch {
+    return '';
+  }
+}
