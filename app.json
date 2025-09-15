@@ -28,6 +28,10 @@
       "adaptiveIcon": {
         "foregroundImage": "~/assets/images/logo.png",
         "backgroundColor": "#ffffff"
+      },
+      "statusBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#ffffff"
       }
     },
     "extra": {

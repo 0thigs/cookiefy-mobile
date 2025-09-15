@@ -50,3 +50,19 @@ async function readMessage(res: Response) {
     return '';
   }
 }
+
+export const http = {
+  get<T = any>(path: string) {
+    return core(path) as Promise<T>;
+  },
+  post<T = any>(path: string, body?: any) {
+    return core(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    }) as Promise<T>;
+  },
+  del<T = any>(path: string) {
+    return core(path, { method: 'DELETE' }) as Promise<T>;
+  },
+};
