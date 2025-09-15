@@ -10,12 +10,9 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
-import {
-  getRecipeDetail,
-  listPublicRecipes,
-  RecipeBrief,
-} from '../services/recipes';
+import { getRecipeDetail, listPublicRecipes, RecipeBrief } from '../services/recipes';
 import { colors } from '../theme/colors';
 import { RecipeCard } from '../components/RecipeCard';
 import { BottomNavBar } from '../components/BottomNavBar';
@@ -27,16 +24,16 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [q, setQ] = useState('');
   const [activeTab, setActiveTab] = useState('home');
-  const [feed, setFeed] = useState<(RecipeBrief & { _cover?: string | null })[]>(
-    []
-  );
+  const [feed, setFeed] = useState<(RecipeBrief & { _cover?: string | null })[]>([]);
 
   async function load(initial = false) {
     if (initial) setLoading(true);
     try {
       const res = await listPublicRecipes({ page: 1, pageSize: 10, q: q || undefined });
       const first = res.data.slice(0, 6);
-      const details = await Promise.allSettled(first.map((r: RecipeBrief) => getRecipeDetail(r.id)));
+      const details = await Promise.allSettled(
+        first.map((r: RecipeBrief) => getRecipeDetail(r.id))
+      );
       const coverMap = new Map<string, string | null>();
       details.forEach((p: any) => {
         if (p.status === 'fulfilled') {
@@ -45,7 +42,10 @@ export default function Home() {
         }
       });
       setFeed(
-        res.data.map((r: RecipeBrief) => ({ ...r, _cover: coverMap.get(r.id) ?? r.coverUrl ?? null }))
+        res.data.map((r: RecipeBrief) => ({
+          ...r,
+          _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
+        }))
       );
     } finally {
       if (initial) setLoading(false);
@@ -64,10 +64,10 @@ export default function Home() {
 
   const header = useMemo(
     () => (
-      <View className="px-3 pt-4 pb-3 bg-white">
-        <View className="flex-row justify-between items-center mb-4">
+      <View className="bg-white px-3 pb-3 pt-4">
+        <View className="mb-4 flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <View className="justify-center items-center mr-3 w-10 h-10 rounded-full">
+            <View className="mr-3 h-10 w-10 items-center justify-center rounded-full">
               <Image
                 source={require('../../assets/images/logo.png')}
                 style={{ width: 60, height: 60 }}
@@ -75,24 +75,28 @@ export default function Home() {
               />
             </View>
             <View>
-              <Text className="text-base text-gray-500">Olá, {me?.name?.split(' ')[0] || 'Chef'}</Text>
-              <Text className="text-base font-medium text-gray-900">O que vamos cozinhar hoje?</Text>
+              <Text className="text-base text-gray-500">
+                Olá, {me?.name?.split(' ')[0] || 'Chef'}
+              </Text>
+              <Text className="text-base font-medium text-gray-900">
+                O que vamos cozinhar hoje?
+              </Text>
             </View>
           </View>
-          <View className="flex-row gap-3 items-center">
-            <Pressable className="justify-center items-center w-12 h-12">
+          <View className="flex-row items-center gap-3">
+            <Pressable className="h-12 w-12 items-center justify-center">
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
             </Pressable>
-            <Pressable className="justify-center items-center w-12 h-12" onPress={signOut}>
+            <Pressable className="h-12 w-12 items-center justify-center" onPress={signOut}>
               <Ionicons name="settings-outline" size={24} color={colors.text} />
             </Pressable>
           </View>
         </View>
 
-        <View className="flex-row items-center px-4 py-3 bg-gray-50 rounded-xl">
+        <View className="flex-row items-center rounded-xl bg-gray-50 px-4 py-3">
           <Ionicons name="search-outline" size={20} color="#6B7280" />
           <TextInput
-            className="flex-1 py-2 ml-3 text-base"
+            className="ml-3 flex-1 py-2 text-base"
             placeholder="Buscar receitas, ingredientes"
             value={q}
             onChangeText={setQ}
@@ -100,17 +104,29 @@ export default function Home() {
             returnKeyType="search"
           />
           {q.length > 0 && (
-            <Pressable onPress={() => { setQ(''); load(true); }}>
+            <Pressable
+              onPress={() => {
+                setQ('');
+                load(true);
+              }}>
               <Ionicons name="close-circle" size={20} color="#9CA3AF" />
             </Pressable>
           )}
         </View>
 
-        <Text className="mt-6 mb-4 text-lg font-semibold">Para você</Text>
-      </View>
-    ),
-    [me?.name, q]
-  );
+         <Text className="mb-4 mt-6 text-lg font-semibold">Para você</Text>
+         
+         <Pressable
+           onPress={() => router.push('/recipes/new')}
+           className="mb-4 flex-row items-center justify-center rounded-lg bg-primary py-3 px-4"
+         >
+           <Ionicons name="add" size={20} color="#fff" />
+           <Text className="ml-2 font-semibold text-white">Nova Receita</Text>
+         </Pressable>
+        </View>
+      ),
+      [me?.name, q]
+    );
 
   const handleTabPress = (tabId: string) => {
     setActiveTab(tabId);
@@ -120,7 +136,7 @@ export default function Home() {
   if (loading) {
     return (
       <View className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center">
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator />
         </View>
         <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
@@ -134,9 +150,10 @@ export default function Home() {
         {header}
         <EmptyState
           title="Nenhuma receita encontrada"
-          description={q ?
-            `Não encontramos receitas para "${q}". Tente buscar por outros ingredientes ou receitas.` :
-            'Ainda não há receitas disponíveis. Que tal ser o primeiro a compartilhar uma receita deliciosa?'
+          description={
+            q
+              ? `Não encontramos receitas para "${q}". Tente buscar por outros ingredientes ou receitas.`
+              : 'Ainda não há receitas disponíveis. Que tal ser o primeiro a compartilhar uma receita deliciosa?'
           }
           icon={q ? 'search-outline' : 'restaurant-outline'}
         />
@@ -153,9 +170,7 @@ export default function Home() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={header}
         renderItem={({ item }) => <RecipeCard recipe={item} />}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       />

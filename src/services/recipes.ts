@@ -5,7 +5,7 @@ export type RecipeBrief = {
   title: string;
   description?: string | null;
   authorId: string;
-  createdAt: string; // ISO
+  createdAt: string; 
   coverUrl?: string | null; // pode não vir do server ainda (fallback buscado no detalhe)
 };
 
@@ -38,7 +38,6 @@ export async function getRecipeDetail(id: string) {
     photos: { url: string; order: number; alt?: string | null }[];
     title: string;
     description?: string | null;
-    // ... demais campos se precisar
   }>(`/recipes/${id}`);
 }
 
@@ -47,5 +46,31 @@ export async function addFavorite(recipeId: string) {
 }
 
 export async function removeFavorite(recipeId: string) {
-  await http.del(`/favorites/${recipeId}`);
+  await http.delete(`/favorites/${recipeId}`);
+}
+
+export async function createRecipe(input: {
+  title: string;
+  description?: string | null;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+  prepMinutes?: number;
+  cookMinutes?: number;
+  servings?: number;
+  nutrition?: Record<string, any>;
+  steps?: { order: number; text: string; durationSec?: number | null }[];
+  photos?: { url: string; alt?: string | null; order?: number }[];
+  ingredients?: { ingredientId?: string; name?: string; amount?: number | null; unit?: string | null }[];
+  categories?: { categoryId: string }[];
+}) {
+  return http.post<{
+    id: string;
+    title: string;
+    description?: string | null;
+    authorId: string;
+    createdAt: string;
+  }>('/recipes', input);
+}
+
+export async function publishRecipe(id: string) {
+  await http.post(`/recipes/${id}/publish`);
 }

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "recipe-flow-mobile",
-    "slug": "recipe-flow-mobile",
+    "name": "cookiefy",
+    "slug": "cookiefy",
     "version": "1.0.0",
     "experiments": {
       "tsconfigPaths": true
@@ -25,6 +25,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.cookiefy.mobile",
       "adaptiveIcon": {
         "foregroundImage": "~/assets/images/logo.png",
         "backgroundColor": "#ffffff"
