@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { addFavorite, removeFavorite, RecipeBrief } from '../services/recipes';
 
 type Props = {
-  recipe: RecipeBrief & { _cover?: string | null }; // _cover = resolvido via detalhe
+  recipe: RecipeBrief & { _cover?: string | null }; 
 };
 
 export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
@@ -22,7 +22,6 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
       if (next) await addFavorite(recipe.id);
       else await removeFavorite(recipe.id);
     } catch {
-      // rollback
       setFav(!next);
     } finally {
       setBusy(false);
@@ -44,7 +43,6 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
           <Ionicons name={fav ? 'star' : 'star-outline'} size={24} color="#fff" />
         </Pressable>
 
-        {/* Overlay escuro para legibilidade do texto */}
         <View
           className="absolute right-0 bottom-0 left-0 px-5 py-5"
           style={{

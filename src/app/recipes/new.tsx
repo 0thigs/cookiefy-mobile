@@ -23,7 +23,16 @@ const schema = z.object({
   prepMinutes: z.string().optional(),
   cookMinutes: z.string().optional(),
   servings: z.string().optional(),
-  nutrition: z.string().optional(), 
+  nutrition: z
+  .object({
+    calories: z.string().optional(),   // kcal
+    protein: z.string().optional(),    // g
+    carbs: z.string().optional(),      // g
+    fat: z.string().optional(),        // g
+    fiber: z.string().optional(),      // g
+    sodium: z.string().optional(),     // mg
+  })
+  .optional(),
 
   steps: z.array(
     z.object({
@@ -70,6 +79,7 @@ export default function NewRecipeScreen() {
       photos: [{ url: '', alt: '' }],
       ingredients: [{ name: '', amount: '', unit: '' }],
       categoriesIds: [],
+      nutrition: { calories: '', protein: '', carbs: '', fat: '', fiber: '', sodium: '' },
       publishNow: true,
     },
   });
@@ -99,6 +109,12 @@ export default function NewRecipeScreen() {
     setValue('categoriesIds', Array.from(current), { shouldValidate: true });
   }
 
+  function toNum(s?: string) {
+    if (!s) return undefined;
+    const n = Number(String(s).replace(',', '.').trim());
+    return Number.isFinite(n) ? n : undefined;
+  }
+
   const onSubmit = handleSubmit(async (form) => {
     setSubmitting(true);
     try {
@@ -110,13 +126,20 @@ export default function NewRecipeScreen() {
         cookMinutes: form.cookMinutes ? Number(form.cookMinutes) : undefined,
         servings: form.servings ? Number(form.servings) : undefined,
         nutrition: (() => {
-          if (!form.nutrition?.trim()) return undefined;
-          try {
-            return JSON.parse(form.nutrition);
-          } catch {
-            Alert.alert('Nutrição', 'JSON inválido em Nutrição. Corrija ou deixe em branco.');
-            throw new Error('nutrition_invalid');
-          }
+          const obj: Record<string, number> = {};
+          const c = toNum(form.nutrition?.calories);
+          const p = toNum(form.nutrition?.protein);
+          const cb = toNum(form.nutrition?.carbs);
+          const f = toNum(form.nutrition?.fat);
+          const fb = toNum(form.nutrition?.fiber);
+          const s = toNum(form.nutrition?.sodium);
+          if (c !== undefined) obj.calories = c;      // kcal
+          if (p !== undefined) obj.protein = p;       // g
+          if (cb !== undefined) obj.carbs = cb;       // g
+          if (f !== undefined) obj.fat = f;           // g
+          if (fb !== undefined) obj.fiber = fb;       // g
+          if (s !== undefined) obj.sodium = s;        // mg
+          return Object.keys(obj).length ? obj : undefined;
         })(),
         steps: (form.steps || [])
           .filter((s: any) => s.text.trim().length)
@@ -267,20 +290,115 @@ export default function NewRecipeScreen() {
         </View>
       </View>
 
-      <Text className="mb-1 font-medium">Nutrição (JSON opcional)</Text>
-      <Controller
-        control={control}
-        name="nutrition"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
-            placeholder='Ex.: {"calories": 450, "protein": "20g"}'
-            value={value}
-            onChangeText={onChange}
-            multiline
+      <Text className="mb-2 text-lg font-semibold">Informações nutricionais (opcional)</Text>
+
+      <View className="flex-row gap-3">
+        <View className="flex-1">
+          <Text className="mb-1 font-medium">Calorias (kcal)</Text>
+          <Controller
+            control={control}
+            name="nutrition.calories"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                placeholder="ex.: 450"
+                keyboardType="number-pad"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
-        )}
-      />
+        </View>
+
+        <View className="flex-1">
+          <Text className="mb-1 font-medium">Proteína (g)</Text>
+          <Controller
+            control={control}
+            name="nutrition.protein"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                placeholder="ex.: 20"
+                keyboardType="decimal-pad"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+        </View>
+      </View>
+
+      <View className="flex-row gap-3">
+        <View className="flex-1">
+          <Text className="mb-1 font-medium">Carboidratos (g)</Text>
+          <Controller
+            control={control}
+            name="nutrition.carbs"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                placeholder="ex.: 55"
+                keyboardType="decimal-pad"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+        </View>
+
+        <View className="flex-1">
+          <Text className="mb-1 font-medium">Gorduras (g)</Text>
+          <Controller
+            control={control}
+            name="nutrition.fat"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                placeholder="ex.: 12"
+                keyboardType="decimal-pad"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+        </View>
+      </View>
+
+      <View className="flex-row gap-3">
+        <View className="flex-1">
+          <Text className="mb-1 font-medium">Fibra (g)</Text>
+          <Controller
+            control={control}
+            name="nutrition.fiber"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                placeholder="ex.: 5"
+                keyboardType="decimal-pad"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+        </View>
+
+        <View className="flex-1">
+          <Text className="mb-1 font-medium">Sódio (mg)</Text>
+          <Controller
+            control={control}
+            name="nutrition.sodium"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                placeholder="ex.: 600"
+                keyboardType="number-pad"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+        </View>
+      </View>
 
       <Text className="mb-2 text-lg font-semibold">Ingredientes</Text>
       {ingredients.fields.map((f, idx) => (
