@@ -47,7 +47,7 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
           }}
           className="absolute top-4 right-4 justify-center items-center w-12 h-12 rounded-full bg-black/40"
         >
-          <Ionicons name={fav ? 'star' : 'star-outline'} size={24} color="#fff" />
+          <Ionicons name={fav ? 'heart' : 'heart-outline'} size={24} color="#fff" />
         </Pressable>
 
         <View
@@ -58,7 +58,7 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
         >
           <Text className="mb-2 text-xl font-semibold text-white">{recipe.title}</Text>
           <View className="flex-row items-center">
-            <Ionicons name="star" size={16} color="#FFD700" />
+            <Ionicons name="heart" size={16} color="#FF6B6B" />
             <Text className="ml-2 text-base font-medium text-white">TESTE</Text>
           </View>
         </View>
