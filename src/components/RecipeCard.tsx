@@ -1,6 +1,7 @@
 import { memo, useState } from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { addFavorite, removeFavorite, RecipeBrief } from '../services/recipes';
 
 type Props = {
@@ -29,7 +30,10 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
   }
 
   return (
-    <View className="overflow-hidden mb-6 rounded-2xl">
+    <Pressable 
+      className="overflow-hidden mb-6 rounded-2xl"
+      onPress={() => router.push(`/recipes/${recipe.id}`)}
+    >
       <View className="relative">
         <Image
           source={{ uri: cover }}
@@ -37,7 +41,10 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
           resizeMode="cover"
         />
         <Pressable
-          onPress={toggleFav}
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleFav();
+          }}
           className="absolute top-4 right-4 justify-center items-center w-12 h-12 rounded-full bg-black/40"
         >
           <Ionicons name={fav ? 'star' : 'star-outline'} size={24} color="#fff" />
@@ -56,6 +63,6 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 });

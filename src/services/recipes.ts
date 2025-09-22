@@ -32,13 +32,55 @@ export async function listPublicRecipes(params?: {
   return http.get<Paginated<RecipeBrief>>(`/recipes?${qs.toString()}`);
 }
 
-export async function getRecipeDetail(id: string) {
-  return http.get<{
+export type RecipeDetail = {
+  id: string;
+  title: string;
+  description?: string | null;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+  prepMinutes?: number | null;
+  cookMinutes?: number | null;
+  servings?: number | null;
+  nutrition?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    fiber?: number;
+    sodium?: number;
+  } | null;
+  author?: {
     id: string;
-    photos: { url: string; order: number; alt?: string | null }[];
-    title: string;
-    description?: string | null;
-  }>(`/recipes/${id}`);
+    name: string;
+    photoUrl?: string | null;
+  };
+  authorId?: string; // Fallback caso a API retorne apenas o ID
+  categories?: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  ingredients?: {
+    name: string;
+    amount?: number | null;
+    unit?: string | null;
+  }[];
+  steps?: {
+    order: number;
+    text: string;
+    durationSec?: number | null;
+  }[];
+  photos?: {
+    url: string;
+    order: number;
+    alt?: string | null;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+  isFavorite?: boolean;
+};
+
+export async function getRecipeDetail(id: string) {
+  return http.get<RecipeDetail>(`/recipes/${id}`);
 }
 
 export async function addFavorite(recipeId: string) {
