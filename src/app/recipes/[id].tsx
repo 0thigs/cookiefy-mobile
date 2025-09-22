@@ -406,7 +406,22 @@ export default function RecipeDetailScreen() {
         {/* Modo de preparo */}
         {recipe.steps && recipe.steps.length > 0 && (
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Modo de Preparo</Text>
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-lg font-semibold text-gray-900">Modo de Preparo</Text>
+              <Pressable
+                onPress={() => router.push({
+                  pathname: `/recipes/${id}/steps`,
+                  params: {
+                    steps: JSON.stringify(recipe.steps),
+                    title: recipe.title
+                  }
+                })}
+                className="flex-row items-center px-4 py-2 rounded-lg bg-primary"
+              >
+                <Ionicons name="play-outline" size={16} color="white" />
+                <Text className="ml-2 font-semibold text-white">Modo Passo a Passo</Text>
+              </Pressable>
+            </View>
             <View className="space-y-4">
               {recipe.steps.map((step, index) => (
                 <View key={index} className="flex-row">
