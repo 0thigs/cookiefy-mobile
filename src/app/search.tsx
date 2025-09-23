@@ -17,6 +17,7 @@ import { colors } from '../theme/colors';
 import { RecipeCard } from '../components/RecipeCard';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
+import { useNavigation } from '../hooks/useNavigation';
 
 interface SearchFilters {
   q: string;
@@ -67,6 +68,8 @@ export default function SearchScreen() {
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  
+  const { handleTabPress } = useNavigation();
 
   const [filters, setFilters] = useState<SearchFilters>({
     q: '',
@@ -202,12 +205,6 @@ export default function SearchScreen() {
     value && value.trim() !== '' && value !== 'newest'
   );
 
-  const handleTabPress = (tabId: string) => {
-    setActiveTab(tabId);
-    if (tabId === 'home') {
-      router.push('/');
-    }
-  };
 
   const renderFilterModal = () => (
     <Modal

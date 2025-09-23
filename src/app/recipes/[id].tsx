@@ -16,17 +16,21 @@ import { getRecipeDetail, addFavorite, removeFavorite, type RecipeDetail } from 
 import { getUserById, type User } from '../../services/users';
 import { colors } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigation } from '../../hooks/useNavigation';
+import { BottomNavBar } from '../../components/BottomNavBar';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { me } = useAuth();
+  const { handleTabPress } = useNavigation();
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [author, setAuthor] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
     if (id) {
@@ -460,6 +464,7 @@ export default function RecipeDetailScreen() {
           </View>
         )}
       </View>
+      <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
     </ScrollView>
   );
 }

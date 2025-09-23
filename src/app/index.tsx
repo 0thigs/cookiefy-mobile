@@ -16,6 +16,7 @@ import { colors } from '../theme/colors';
 import { RecipeCard } from '../components/RecipeCard';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
+import { useNavigation } from '../hooks/useNavigation';
 
 export default function Home() {
   const { me, signOut } = useAuth();
@@ -23,6 +24,8 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [feed, setFeed] = useState<(RecipeBrief & { _cover?: string | null })[]>([]);
+  
+  const { handleTabPress } = useNavigation();
 
   async function load(initial = false) {
     if (initial) setLoading(true);
@@ -115,10 +118,6 @@ export default function Home() {
       [me?.name]
     );
 
-  const handleTabPress = (tabId: string) => {
-    setActiveTab(tabId);
-    console.log(`Navegando para: ${tabId}`);
-  };
 
   if (loading) {
     return (

@@ -10,6 +10,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { colors } from '../../../theme/colors';
+import { useNavigation } from '../../../hooks/useNavigation';
+import { BottomNavBar } from '../../../components/BottomNavBar';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -31,7 +33,9 @@ export default function RecipeStepsScreen() {
     title: string; 
   }>();
   
+  const { handleTabPress } = useNavigation();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState('home');
   
   // Parse dos steps do parâmetro
   const steps: Step[] = stepsParam ? JSON.parse(stepsParam) : [];
@@ -231,6 +235,7 @@ export default function RecipeStepsScreen() {
           </Pressable>
         )}
       </View>
+      <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
     </View>
   );
 }
