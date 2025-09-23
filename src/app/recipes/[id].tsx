@@ -175,131 +175,132 @@ export default function RecipeDetailScreen() {
   const coverPhoto = recipe.photos?.[0]?.url || 'https://placehold.co/800x500?text=Cookiefy';
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      {/* Header com foto de capa */}
-      <View className="relative">
-        <Image
-          source={{ uri: coverPhoto }}
-          style={{ width: screenWidth, height: 300 }}
-          resizeMode="cover"
-        />
-        
-        {/* Overlay com botões */}
-        <View className="absolute top-0 right-0 left-0 flex-row justify-between items-center p-4 pt-12">
-          <Pressable
-            onPress={() => router.back()}
-            className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </Pressable>
+    <View className="flex-1 bg-white">
+      <ScrollView className="flex-1">
+        {/* Header com foto de capa */}
+        <View className="relative">
+          <Image
+            source={{ uri: coverPhoto }}
+            style={{ width: screenWidth, height: 300 }}
+            resizeMode="cover"
+          />
           
-          <View className="flex-row gap-3">
+          {/* Overlay com botões */}
+          <View className="absolute top-0 right-0 left-0 flex-row justify-between items-center p-4 pt-12">
             <Pressable
-              onPress={toggleFavorite}
-              disabled={favoriteLoading}
+              onPress={() => router.back()}
               className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
             >
-              {favoriteLoading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Ionicons 
-                  name={recipe.isFavorite ? "heart" : "heart-outline"} 
-                  size={24} 
-                  color="white" 
-                />
-              )}
+              <Ionicons name="arrow-back" size={24} color="white" />
             </Pressable>
             
-            <Pressable
-              onPress={shareRecipe}
-              className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
-            >
-              <Ionicons name="share-outline" size={24} color="white" />
-            </Pressable>
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={toggleFavorite}
+                disabled={favoriteLoading}
+                className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
+              >
+                {favoriteLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Ionicons 
+                    name={recipe.isFavorite ? "heart" : "heart-outline"} 
+                    size={24} 
+                    color="white" 
+                  />
+                )}
+              </Pressable>
+              
+              <Pressable
+                onPress={shareRecipe}
+                className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
+              >
+                <Ionicons name="share-outline" size={24} color="white" />
+              </Pressable>
+            </View>
           </View>
-        </View>
 
-        {/* Informações sobrepostas na parte inferior */}
-        <View className="absolute right-0 bottom-0 left-0">
-          {/* Overlay de fundo com gradiente mais escuro */}
-          <View 
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              paddingTop: 40,
-              paddingBottom: 24,
-              paddingHorizontal: 24,
-            }}
-          >
-            <Text 
-              className="mb-2 text-2xl font-bold text-white"
+          {/* Informações sobrepostas na parte inferior */}
+          <View className="absolute right-0 bottom-0 left-0">
+            {/* Overlay de fundo com gradiente mais escuro */}
+            <View 
               style={{
-                textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 3,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                paddingTop: 40,
+                paddingBottom: 24,
+                paddingHorizontal: 24,
               }}
             >
-              {recipe.title}
-            </Text>
-            <Text 
-              className="mb-4 text-white/95"
-              style={{
-                textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 3,
-                lineHeight: 20,
-              }}
-            >
-              {recipe.description}
-            </Text>
-            
-            <View className="flex-row flex-wrap gap-4 items-center">
-              <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
-                <Ionicons name="time-outline" size={16} color="white" />
-                <Text 
-                  className="ml-1 text-sm font-medium text-white"
-                  style={{
-                    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                    textShadowOffset: { width: 0, height: 1 },
-                    textShadowRadius: 2,
-                  }}
-                >
-                  {formatDuration(recipe.prepMinutes)} prep
-                </Text>
-              </View>
+              <Text 
+                className="mb-2 text-2xl font-bold text-white"
+                style={{
+                  textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 3,
+                }}
+              >
+                {recipe.title}
+              </Text>
+              <Text 
+                className="mb-4 text-white/95"
+                style={{
+                  textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 3,
+                  lineHeight: 20,
+                }}
+              >
+                {recipe.description}
+              </Text>
               
-              <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
-                <Ionicons name="flame-outline" size={16} color="white" />
-                <Text 
-                  className="ml-1 text-sm font-medium text-white"
-                  style={{
-                    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                    textShadowOffset: { width: 0, height: 1 },
-                    textShadowRadius: 2,
-                  }}
-                >
-                  {formatDuration(recipe.cookMinutes)} cozimento
-                </Text>
-              </View>
-              
-              <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
-                <Ionicons name="people-outline" size={16} color="white" />
-                <Text 
-                  className="ml-1 text-sm font-medium text-white"
-                  style={{
-                    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-                    textShadowOffset: { width: 0, height: 1 },
-                    textShadowRadius: 2,
-                  }}
-                >
-                  {recipe.servings || 'N/A'} porções
-                </Text>
+              <View className="flex-row flex-wrap gap-4 items-center">
+                <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
+                  <Ionicons name="time-outline" size={16} color="white" />
+                  <Text 
+                    className="ml-1 text-sm font-medium text-white"
+                    style={{
+                      textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                      textShadowOffset: { width: 0, height: 1 },
+                      textShadowRadius: 2,
+                    }}
+                  >
+                    {formatDuration(recipe.prepMinutes)} prep
+                  </Text>
+                </View>
+                
+                <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
+                  <Ionicons name="flame-outline" size={16} color="white" />
+                  <Text 
+                    className="ml-1 text-sm font-medium text-white"
+                    style={{
+                      textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                      textShadowOffset: { width: 0, height: 1 },
+                      textShadowRadius: 2,
+                    }}
+                  >
+                    {formatDuration(recipe.cookMinutes)} cozimento
+                  </Text>
+                </View>
+                
+                <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
+                  <Ionicons name="people-outline" size={16} color="white" />
+                  <Text 
+                    className="ml-1 text-sm font-medium text-white"
+                    style={{
+                      textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                      textShadowOffset: { width: 0, height: 1 },
+                      textShadowRadius: 2,
+                    }}
+                  >
+                    {recipe.servings || 'N/A'} porções
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
 
-      <View className="p-6">
+        <View className="p-6">
         {/* Informações do autor */}
         <View className="flex-row items-center mb-6">
           <View className="justify-center items-center mr-3 w-12 h-12 bg-gray-200 rounded-full">
@@ -463,8 +464,9 @@ export default function RecipeDetailScreen() {
             </ScrollView>
           </View>
         )}
-      </View>
+        </View>
+      </ScrollView>
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
-    </ScrollView>
+    </View>
   );
 }

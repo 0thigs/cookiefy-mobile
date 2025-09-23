@@ -90,24 +90,25 @@ export default function RecipeStepsScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
-      <View className="flex-row justify-between items-center p-4 pt-12 bg-white border-b border-gray-200">
-        <Pressable
-          onPress={() => router.back()}
-          className="flex-row items-center"
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          <Text className="ml-2 text-lg font-semibold text-primary">Voltar</Text>
-        </Pressable>
-        
-        <View className="flex-1 mx-4">
-          <Text className="text-sm font-medium text-center text-gray-600" numberOfLines={1}>
-            {title}
-          </Text>
+      <View className="flex-1">
+        {/* Header */}
+        <View className="flex-row justify-between items-center p-4 pt-12 bg-white border-b border-gray-200">
+          <Pressable
+            onPress={() => router.back()}
+            className="flex-row items-center"
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.primary} />
+            <Text className="ml-2 text-lg font-semibold text-primary">Voltar</Text>
+          </Pressable>
+          
+          <View className="flex-1 mx-4">
+            <Text className="text-sm font-medium text-center text-gray-600" numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+          
+          <View className="w-16" />
         </View>
-        
-        <View className="w-16" />
-      </View>
 
       {/* Progress Bar */}
       <View className="px-4 py-3 bg-gray-50">
@@ -234,6 +235,7 @@ export default function RecipeStepsScreen() {
             <Ionicons name="chevron-forward" size={20} color="white" className="ml-2" />
           </Pressable>
         )}
+      </View>
       </View>
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
     </View>
