@@ -44,6 +44,9 @@ export default function RecipeDetailScreen() {
     setLoading(true);
     try {
       const data = await getRecipeDetail(id);
+      
+      // O campo isFavorited já vem da API, não precisa verificar separadamente
+      
       setRecipe(data);
       
       if (!data.author && data.authorId) {
@@ -83,12 +86,12 @@ export default function RecipeDetailScreen() {
     
     setFavoriteLoading(true);
     try {
-      if (recipe.isFavorite) {
+      if (recipe.isFavorited) {
         await removeFavorite(recipe.id);
-        setRecipe(prev => prev ? { ...prev, isFavorite: false } : null);
+        setRecipe(prev => prev ? { ...prev, isFavorited: false } : null);
       } else {
         await addFavorite(recipe.id);
-        setRecipe(prev => prev ? { ...prev, isFavorite: true } : null);
+        setRecipe(prev => prev ? { ...prev, isFavorited: true } : null);
       }
     } catch (error: any) {
       Alert.alert('Erro', 'Não foi possível atualizar os favoritos');
@@ -204,9 +207,9 @@ export default function RecipeDetailScreen() {
                   <ActivityIndicator size="small" color="white" />
                 ) : (
                   <Ionicons 
-                    name={recipe.isFavorite ? "heart" : "heart-outline"} 
+                    name={recipe.isFavorited ? "heart" : "heart-outline"} 
                     size={24} 
-                    color="white" 
+                    color={recipe.isFavorited ? "#FF6B6B" : "white"} 
                   />
                 )}
               </Pressable>

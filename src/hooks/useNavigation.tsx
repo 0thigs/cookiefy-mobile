@@ -13,8 +13,7 @@ export function useNavigation() {
         router.push('/search');
         break;
       case 'favorites':
-        // TODO: Implementar página de favoritos
-        router.push('/');
+        router.push('/favorites');
         break;
       case 'profile':
         // TODO: Implementar página de perfil

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -12,14 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { listPublicRecipes, getRecipeDetail, RecipeBrief } from '../services/recipes';
+import { getFavorites, getRecipeDetail, getFavoritesStats, RecipeBrief } from '../services/recipes';
 import { colors } from '../theme/colors';
 import { RecipeCard } from '../components/RecipeCard';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
 import { useNavigation } from '../hooks/useNavigation';
 
-interface SearchFilters {
+interface FavoritesFilters {
   q: string;
   difficulty: string;
   minPrep: string;
@@ -39,6 +39,7 @@ interface SearchFilters {
   minServings: string;
   maxServings: string;
   sort: string;
+  authorName: string;
 }
 
 const DIFFICULTY_OPTIONS = [
@@ -49,29 +50,35 @@ const DIFFICULTY_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Mais Recentes' },
-  { value: 'oldest', label: 'Mais Antigas' },
+  { value: 'favorited_desc', label: 'Favoritados Recentemente' },
+  { value: 'favorited_asc', label: 'Favoritados Antigamente' },
+  { value: 'newest', label: 'Receitas Mais Recentes' },
+  { value: 'oldest', label: 'Receitas Mais Antigas' },
   { value: 'title_asc', label: 'Título A-Z' },
   { value: 'title_desc', label: 'Título Z-A' },
   { value: 'prep_time_asc', label: 'Menor Tempo de Prep' },
   { value: 'prep_time_desc', label: 'Maior Tempo de Prep' },
-  { value: 'cook_time_asc', label: 'Menor Tempo de Cozimento' },
-  { value: 'cook_time_desc', label: 'Maior Tempo de Cozimento' },
 ];
 
-export default function SearchScreen() {
+export default function FavoritesScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState('search');
-  const [recipes, setRecipes] = useState<(RecipeBrief & { _cover?: string | null })[]>([]);
+  const [activeTab, setActiveTab] = useState('favorites');
+  const [recipes, setRecipes] = useState<(RecipeBrief & { _cover?: string | null; favoritedAt: string })[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [stats, setStats] = useState<{
+    totalFavorites: number;
+    recentFavorites: number;
+    mostFavoritedCategory: string;
+    averageRating: number;
+  } | null>(null);
   
   const { handleTabPress } = useNavigation();
 
-  const [filters, setFilters] = useState<SearchFilters>({
+  const [filters, setFilters] = useState<FavoritesFilters>({
     q: '',
     difficulty: '',
     minPrep: '',
@@ -90,7 +97,8 @@ export default function SearchScreen() {
     maxFat: '',
     minServings: '',
     maxServings: '',
-    sort: 'newest',
+    sort: 'favorited_desc',
+    authorName: '',
   });
 
   const searchParams = useMemo(() => {
@@ -106,7 +114,7 @@ export default function SearchScreen() {
     return params;
   }, [filters]);
 
-  async function searchRecipes(resetPage = true) {
+  async function loadFavorites(resetPage = true) {
     if (resetPage) {
       setCurrentPage(1);
     }
@@ -120,8 +128,9 @@ export default function SearchScreen() {
         pageSize: 20 
       };
       
-      const res = await listPublicRecipes(params);
+      const res = await getFavorites(params);
       
+      // Carregar detalhes das receitas para obter as imagens
       const first = res.data.slice(0, 20);
       const details = await Promise.allSettled(
         first.map((r: RecipeBrief) => getRecipeDetail(r.id))
@@ -137,7 +146,7 @@ export default function SearchScreen() {
       const recipesWithCovers = res.data.map((r: any) => ({
         ...r,
         _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
-        isFavorited: r.isFavorited || false, // Inclui status de favorito
+        isFavorited: true, // Todas as receitas na página de favoritos são favoritas
       }));
       
       if (resetPage) {
@@ -150,31 +159,60 @@ export default function SearchScreen() {
       
       setTotalResults(res.meta?.total || res.data.length);
     } catch (error) {
-      console.error('Erro ao buscar receitas:', error);
+      console.error('Erro ao carregar favoritos:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const statsData = await getFavoritesStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
     }
   }
 
   // Busca com debounce para texto, imediata para outros filtros
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      searchRecipes(true);
-    }, filters.q ? 500 : 100); // Debounce maior para texto, menor para outros filtros
+      loadFavorites(true);
+    }, filters.q ? 500 : 100);
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
 
+  useEffect(() => {
+    loadStats();
+  }, []);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await searchRecipes(true);
+    await loadFavorites(true);
     setRefreshing(false);
+  };
+
+  const handleFavoriteToggle = (recipeId: string, isFavorited: boolean) => {
+    if (!isFavorited) {
+      // Se foi desfavoritado, remove da lista
+      setRecipes(prev => prev.filter(recipe => recipe.id !== recipeId));
+      setTotalResults(prev => Math.max(0, prev - 1));
+      
+      // Atualiza estatísticas
+      if (stats) {
+        setStats(prev => prev ? {
+          ...prev,
+          totalFavorites: Math.max(0, prev.totalFavorites - 1)
+        } : null);
+      }
+    }
   };
 
   const loadMore = () => {
     if (!loading && hasMore) {
       setCurrentPage(prev => prev + 1);
-      searchRecipes(false);
+      loadFavorites(false);
     }
   };
 
@@ -198,14 +236,14 @@ export default function SearchScreen() {
       maxFat: '',
       minServings: '',
       maxServings: '',
-      sort: 'newest',
+      sort: 'favorited_desc',
+      authorName: '',
     });
   };
 
   const hasActiveFilters = Object.values(filters).some(value => 
-    value && value.trim() !== '' && value !== 'newest'
+    value && value.trim() !== '' && value !== 'favorited_desc'
   );
-
 
   const renderFilterModal = () => (
     <Modal
@@ -301,33 +339,6 @@ export default function SearchScreen() {
             </View>
           </View>
 
-          {/* Tempo Total */}
-          <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo Total (min)</Text>
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
-                <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
-                  placeholder="15"
-                  value={filters.totalTimeMin}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, totalTimeMin: text }))}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
-                <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
-                  placeholder="300"
-                  value={filters.totalTimeMax}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, totalTimeMax: text }))}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-          </View>
-
           {/* Ingredientes */}
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
@@ -342,6 +353,17 @@ export default function SearchScreen() {
             </Text>
           </View>
 
+          {/* Autor */}
+          <View className="mb-6">
+            <Text className="mb-3 text-lg font-semibold text-gray-900">Autor</Text>
+            <TextInput
+              className="px-3 py-2 rounded-lg border border-gray-300"
+              placeholder="Ex: João Silva"
+              value={filters.authorName}
+              onChangeText={(text) => setFilters(prev => ({ ...prev, authorName: text }))}
+            />
+          </View>
+
           {/* Calorias */}
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Calorias Máximas</Text>
@@ -352,33 +374,6 @@ export default function SearchScreen() {
               onChangeText={(text) => setFilters(prev => ({ ...prev, maxCalories: text }))}
               keyboardType="numeric"
             />
-          </View>
-
-          {/* Porções */}
-          <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Porções</Text>
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
-                <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
-                  placeholder="1"
-                  value={filters.minServings}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, minServings: text }))}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
-                <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
-                  placeholder="10"
-                  value={filters.maxServings}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, maxServings: text }))}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
           </View>
 
           {/* Ordenação */}
@@ -438,7 +433,7 @@ export default function SearchScreen() {
             <Ionicons name="search-outline" size={20} color="#6B7280" />
             <TextInput
               className="flex-1 py-2 ml-3 text-base"
-              placeholder="Buscar receitas, ingredientes..."
+              placeholder="Buscar favoritos..."
               value={filters.q}
               onChangeText={(text) => setFilters(prev => ({ ...prev, q: text }))}
               returnKeyType="search"
@@ -464,6 +459,29 @@ export default function SearchScreen() {
           </Pressable>
         </View>
 
+        {/* Estatísticas */}
+        {stats && (
+          <View className="flex-row justify-between items-center mt-4">
+            <View className="flex-row gap-4 items-center">
+              <View className="flex-row items-center">
+                <Ionicons name="heart" size={16} color={colors.primary} />
+                <Text className="ml-1 text-sm font-medium text-gray-700">
+                  {stats.totalFavorites} favoritos
+                </Text>
+              </View>
+              <View className="flex-row items-center">
+                <Ionicons name="time" size={16} color={colors.primary} />
+                <Text className="ml-1 text-sm font-medium text-gray-700">
+                  {stats.recentFavorites} recentes
+                </Text>
+              </View>
+            </View>
+            <Text className="text-sm text-gray-500">
+              {totalResults} {totalResults === 1 ? 'encontrado' : 'encontrados'}
+            </Text>
+          </View>
+        )}
+
         {/* Resultados */}
         <View className="flex-row justify-between items-center mt-3">
           <Text className="text-sm text-gray-600">
@@ -477,27 +495,27 @@ export default function SearchScreen() {
         </View>
       </View>
 
-      {/* Lista de Receitas */}
+      {/* Lista de Favoritos */}
       {loading && recipes.length === 0 ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text className="mt-4 text-gray-600">Buscando receitas...</Text>
+          <Text className="mt-4 text-gray-600">Carregando favoritos...</Text>
         </View>
       ) : recipes.length === 0 ? (
         <EmptyState
-          title="Nenhuma receita encontrada"
+          title="Nenhum favorito encontrado"
           description={
             hasActiveFilters
-              ? 'Tente ajustar os filtros ou limpar para ver mais receitas.'
-              : 'Não encontramos receitas com os critérios de busca.'
+              ? 'Tente ajustar os filtros ou limpar para ver mais favoritos.'
+              : 'Você ainda não tem receitas favoritadas. Que tal começar a salvar suas receitas favoritas?'
           }
-          icon="search-outline"
+          icon="heart-outline"
         />
       ) : (
         <FlatList
           data={recipes}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <RecipeCard recipe={item} onFavoriteToggle={() => {}} />}
+           renderItem={({ item }) => <RecipeCard recipe={item} onFavoriteToggle={handleFavoriteToggle} />}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}

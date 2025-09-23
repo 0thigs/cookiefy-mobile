@@ -43,9 +43,10 @@ export default function Home() {
         }
       });
       setFeed(
-        res.data.map((r: RecipeBrief) => ({
+        res.data.map((r: any) => ({
           ...r,
           _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
+          isFavorited: r.isFavorited || false, // Inclui status de favorito
         }))
       );
     } finally {
@@ -151,7 +152,7 @@ export default function Home() {
         data={feed}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={header}
-        renderItem={({ item }) => <RecipeCard recipe={item} />}
+        renderItem={({ item }) => <RecipeCard recipe={item} onFavoriteToggle={() => {}} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}

@@ -7,6 +7,23 @@ export type RecipeBrief = {
   authorId: string;
   createdAt: string; 
   coverUrl?: string | null; // pode não vir do server ainda (fallback buscado no detalhe)
+  isFavorited?: boolean; // status de favorito (vem da API)
+  ingredients?: {
+    ingredientId: string;
+    name: string;
+    amount?: number | null;
+    unit?: string | null;
+  }[];
+  categories?: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  photos?: {
+    url: string;
+    order: number;
+    alt?: string | null;
+  }[];
 };
 
 export type Paginated<T> = {
@@ -103,7 +120,7 @@ export type RecipeDetail = {
   }[];
   createdAt: string;
   updatedAt: string;
-  isFavorite?: boolean;
+  isFavorited?: boolean;
 };
 
 export async function getRecipeDetail(id: string) {
@@ -116,6 +133,65 @@ export async function addFavorite(recipeId: string) {
 
 export async function removeFavorite(recipeId: string) {
   await http.delete(`/favorites/${recipeId}`);
+}
+
+export async function getFavorites(params?: {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  difficulty?: string;
+  minPrep?: string;
+  maxPrep?: string;
+  minCook?: string;
+  maxCook?: string;
+  totalTimeMin?: string;
+  totalTimeMax?: string;
+  categoryId?: string;
+  categorySlug?: string;
+  ingredient?: string;
+  ingredients?: string;
+  maxCalories?: string;
+  minProtein?: string;
+  maxCarbs?: string;
+  maxFat?: string;
+  minServings?: string;
+  maxServings?: string;
+  sort?: string;
+  authorId?: string;
+  authorName?: string;
+}) {
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 20;
+  
+  const queryParams: Record<string, string> = {
+    page: String(page),
+    pageSize: String(pageSize),
+  };
+
+  // Adicionar apenas parâmetros não vazios
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value && String(value).trim() !== '' && key !== 'page' && key !== 'pageSize') {
+      queryParams[key] = String(value);
+    }
+  });
+
+  // Adicionar sort padrão se não especificado
+  if (!queryParams.sort) {
+    queryParams.sort = 'favorited_desc';
+  }
+
+  const qs = new URLSearchParams(queryParams);
+  return http.get<Paginated<RecipeBrief & { favoritedAt: string }>>(`/favorites?${qs.toString()}`);
+}
+
+
+export async function getFavoritesStats() {
+  return http.get<{
+    totalFavorites: number;
+    recentFavorites: number;
+    mostFavoritedCategory: string;
+    averageRating: number;
+  }>('/favorites/stats');
 }
 
 export async function createRecipe(input: {

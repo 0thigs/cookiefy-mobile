@@ -1,18 +1,24 @@
-import { memo, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { addFavorite, removeFavorite, RecipeBrief } from '../services/recipes';
 
 type Props = {
-  recipe: RecipeBrief & { _cover?: string | null }; 
+  recipe: RecipeBrief & { _cover?: string | null };
+  onFavoriteToggle?: (recipeId: string, isFavorited: boolean) => void;
 };
 
-export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
-  const [fav, setFav] = useState(false);
+export const RecipeCard = memo(function RecipeCard({ recipe, onFavoriteToggle }: Props) {
+  const [fav, setFav] = useState(recipe.isFavorited || false);
   const [busy, setBusy] = useState(false);
   const cover =
     recipe._cover ?? recipe.coverUrl ?? 'https://placehold.co/800x500?text=Cookiefy';
+
+  // Sincroniza o estado local com as props quando mudam
+  React.useEffect(() => {
+    setFav(recipe.isFavorited || false);
+  }, [recipe.isFavorited]);
 
   async function toggleFav() {
     if (busy) return;
@@ -22,6 +28,9 @@ export const RecipeCard = memo(function RecipeCard({ recipe }: Props) {
     try {
       if (next) await addFavorite(recipe.id);
       else await removeFavorite(recipe.id);
+      
+      // Notifica o componente pai sobre a mudança
+      onFavoriteToggle?.(recipe.id, next);
     } catch {
       setFav(!next);
     } finally {

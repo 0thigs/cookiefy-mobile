@@ -402,7 +402,7 @@ export default function NewRecipeScreen() {
 
       <Text className="mb-2 text-lg font-semibold">Ingredientes</Text>
       {ingredients.fields.map((f, idx) => (
-        <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
+        <View key={f.id} className="p-3 mb-2 rounded-xl border border-gray-200">
           <Text className="mb-1 font-medium">Nome</Text>
           <Controller
             control={control}
@@ -436,7 +436,7 @@ export default function NewRecipeScreen() {
               />
             </View>
           </View>
-          <Pressable className="self-end mt-2 px-3 py-1 rounded-lg border border-gray-300"
+          <Pressable className="self-end px-3 py-1 mt-2 rounded-lg border border-gray-300"
             onPress={() => ingredients.remove(idx)}>
             <Text className="text-gray-600">Remover</Text>
           </Pressable>
@@ -449,7 +449,7 @@ export default function NewRecipeScreen() {
 
       <Text className="mb-2 text-lg font-semibold">Modo de preparo</Text>
       {steps.fields.map((f, idx) => (
-        <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
+        <View key={f.id} className="p-3 mb-2 rounded-xl border border-gray-200">
           <Text className="mb-1 font-medium">Passo {idx + 1}</Text>
           <Controller
             control={control}
@@ -468,7 +468,7 @@ export default function NewRecipeScreen() {
                 keyboardType="number-pad" placeholder="Ex.: 60" value={value} onChangeText={onChange} />
             )}
           />
-          <Pressable className="self-end mt-2 px-3 py-1 rounded-lg border border-gray-300"
+          <Pressable className="self-end px-3 py-1 mt-2 rounded-lg border border-gray-300"
             onPress={() => steps.remove(idx)}>
             <Text className="text-gray-600">Remover</Text>
           </Pressable>
@@ -481,7 +481,7 @@ export default function NewRecipeScreen() {
 
       <Text className="mb-2 text-lg font-semibold">Fotos (URL pública)</Text>
       {photos.fields.map((f, idx) => (
-        <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
+        <View key={f.id} className="p-3 mb-2 rounded-xl border border-gray-200">
           <Text className="mb-1 font-medium">URL</Text>
           <Controller
             control={control}
@@ -500,7 +500,7 @@ export default function NewRecipeScreen() {
                 placeholder="Descrição da imagem" value={value} onChangeText={onChange} />
             )}
           />
-          <Pressable className="self-end mt-2 px-3 py-1 rounded-lg border border-gray-300"
+          <Pressable className="self-end px-3 py-1 mt-2 rounded-lg border border-gray-300"
             onPress={() => photos.remove(idx)}>
             <Text className="text-gray-600">Remover</Text>
           </Pressable>
@@ -541,7 +541,7 @@ export default function NewRecipeScreen() {
         )}
       </View>
 
-      <View className="flex-row items-center justify-between mb-4">
+      <View className="flex-row justify-between items-center mb-4">
         <Text className="font-medium">Publicar agora</Text>
         <Controller
           control={control}
