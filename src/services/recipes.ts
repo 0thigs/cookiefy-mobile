@@ -18,17 +18,44 @@ export async function listPublicRecipes(params?: {
   page?: number;
   pageSize?: number;
   q?: string;
+  difficulty?: string;
+  minPrep?: string;
+  maxPrep?: string;
+  minCook?: string;
+  maxCook?: string;
+  totalTimeMin?: string;
+  totalTimeMax?: string;
+  categoryId?: string;
+  categorySlug?: string;
   ingredient?: string;
+  ingredients?: string;
+  maxCalories?: string;
+  minProtein?: string;
+  maxCarbs?: string;
+  maxFat?: string;
+  minServings?: string;
+  maxServings?: string;
+  sort?: string;
 }) {
   const page = params?.page ?? 1;
-  const pageSize = params?.pageSize ?? 10;
-  const qs = new URLSearchParams({
+  const pageSize = params?.pageSize ?? 20;
+  
+  const queryParams: Record<string, string> = {
     page: String(page),
     pageSize: String(pageSize),
-    sort: 'newest',
-    ...(params?.q ? { q: params.q } : {}),
-    ...(params?.ingredient ? { ingredient: params.ingredient } : {}),
+  };
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value && String(value).trim() !== '' && key !== 'page' && key !== 'pageSize') {
+      queryParams[key] = String(value);
+    }
   });
+
+  if (!queryParams.sort) {
+    queryParams.sort = 'newest';
+  }
+
+  const qs = new URLSearchParams(queryParams);
   return http.get<Paginated<RecipeBrief>>(`/recipes?${qs.toString()}`);
 }
 

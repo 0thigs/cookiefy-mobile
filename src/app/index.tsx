@@ -4,7 +4,6 @@ import {
   FlatList,
   Pressable,
   Text,
-  TextInput,
   View,
   RefreshControl,
   Image,
@@ -22,14 +21,13 @@ export default function Home() {
   const { me, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [q, setQ] = useState('');
   const [activeTab, setActiveTab] = useState('home');
   const [feed, setFeed] = useState<(RecipeBrief & { _cover?: string | null })[]>([]);
 
   async function load(initial = false) {
     if (initial) setLoading(true);
     try {
-      const res = await listPublicRecipes({ page: 1, pageSize: 10, q: q || undefined });
+      const res = await listPublicRecipes({ page: 1, pageSize: 10 });
       const first = res.data.slice(0, 6);
       const details = await Promise.allSettled(
         first.map((r: RecipeBrief) => getRecipeDetail(r.id))
@@ -64,10 +62,10 @@ export default function Home() {
 
   const header = useMemo(
     () => (
-      <View className="bg-white px-3 pb-3 pt-4">
-        <View className="mb-4 flex-row items-center justify-between">
+      <View className="px-3 pt-4 pb-3 bg-white">
+        <View className="flex-row justify-between items-center mb-4">
           <View className="flex-row items-center">
-            <View className="mr-3 h-10 w-10 items-center justify-center rounded-full">
+            <View className="justify-center items-center mr-3 w-10 h-10 rounded-full">
               <Image
                 source={require('../../assets/images/logo.png')}
                 style={{ width: 60, height: 60 }}
@@ -83,49 +81,38 @@ export default function Home() {
               </Text>
             </View>
           </View>
-          <View className="flex-row items-center gap-3">
-            <Pressable className="h-12 w-12 items-center justify-center">
+          <View className="flex-row gap-3 items-center">
+            <Pressable className="justify-center items-center w-12 h-12">
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
             </Pressable>
-            <Pressable className="h-12 w-12 items-center justify-center" onPress={signOut}>
+            <Pressable className="justify-center items-center w-12 h-12" onPress={signOut}>
               <Ionicons name="settings-outline" size={24} color={colors.text} />
             </Pressable>
           </View>
         </View>
 
-        <View className="flex-row items-center rounded-xl bg-gray-50 px-4 py-3">
+        <Pressable
+          onPress={() => router.push('/search')}
+          className="flex-row items-center px-4 py-3 bg-gray-50 rounded-xl"
+        >
           <Ionicons name="search-outline" size={20} color="#6B7280" />
-          <TextInput
-            className="ml-3 flex-1 py-2 text-base"
-            placeholder="Buscar receitas, ingredientes"
-            value={q}
-            onChangeText={setQ}
-            onSubmitEditing={() => load(true)}
-            returnKeyType="search"
-          />
-          {q.length > 0 && (
-            <Pressable
-              onPress={() => {
-                setQ('');
-                load(true);
-              }}>
-              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
-            </Pressable>
-          )}
-        </View>
+          <Text className="flex-1 py-2 ml-3 text-base text-gray-500">
+            Buscar receitas, ingredientes
+          </Text>
+        </Pressable>
 
-         <Text className="mb-4 mt-6 text-lg font-semibold">Para você</Text>
+         <Text className="mt-6 mb-4 text-lg font-semibold">Para você</Text>
          
          <Pressable
            onPress={() => router.push('/recipes/new')}
-           className="mb-4 flex-row items-center justify-center rounded-lg bg-primary py-3 px-4"
+           className="flex-row justify-center items-center px-4 py-3 mb-4 rounded-lg bg-primary"
          >
            <Ionicons name="add" size={20} color="#fff" />
            <Text className="ml-2 font-semibold text-white">Nova Receita</Text>
          </Pressable>
         </View>
       ),
-      [me?.name, q]
+      [me?.name]
     );
 
   const handleTabPress = (tabId: string) => {
@@ -136,7 +123,7 @@ export default function Home() {
   if (loading) {
     return (
       <View className="flex-1 bg-white">
-        <View className="flex-1 items-center justify-center">
+        <View className="flex-1 justify-center items-center">
           <ActivityIndicator />
         </View>
         <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
@@ -150,12 +137,8 @@ export default function Home() {
         {header}
         <EmptyState
           title="Nenhuma receita encontrada"
-          description={
-            q
-              ? `Não encontramos receitas para "${q}". Tente buscar por outros ingredientes ou receitas.`
-              : 'Ainda não há receitas disponíveis. Que tal ser o primeiro a compartilhar uma receita deliciosa?'
-          }
-          icon={q ? 'search-outline' : 'restaurant-outline'}
+          description="Ainda não há receitas disponíveis. Que tal ser o primeiro a compartilhar uma receita deliciosa?"
+          icon="restaurant-outline"
         />
         <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
       </View>
