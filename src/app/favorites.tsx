@@ -65,7 +65,9 @@ export default function FavoritesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('favorites');
-  const [recipes, setRecipes] = useState<(RecipeBrief & { _cover?: string | null; favoritedAt: string })[]>([]);
+  const [recipes, setRecipes] = useState<
+    (RecipeBrief & { _cover?: string | null; favoritedAt: string })[]
+  >([]);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -75,7 +77,7 @@ export default function FavoritesScreen() {
     mostFavoritedCategory: string;
     averageRating: number;
   } | null>(null);
-  
+
   const { handleTabPress } = useNavigation();
 
   const [filters, setFilters] = useState<FavoritesFilters>({
@@ -104,7 +106,6 @@ export default function FavoritesScreen() {
   const searchParams = useMemo(() => {
     const params: any = {};
 
-    // Adicionar apenas parâmetros não vazios
     Object.entries(filters).forEach(([key, value]) => {
       if (value && String(value).trim() !== '') {
         params[key] = value;
@@ -122,15 +123,14 @@ export default function FavoritesScreen() {
     setLoading(true);
     try {
       const page = resetPage ? 1 : currentPage;
-      const params = { 
-        ...searchParams, 
-        page, 
-        pageSize: 20 
+      const params = {
+        ...searchParams,
+        page,
+        pageSize: 20,
       };
-      
+
       const res = await getFavorites(params);
-      
-      // Carregar detalhes das receitas para obter as imagens
+
       const first = res.data.slice(0, 20);
       const details = await Promise.allSettled(
         first.map((r: RecipeBrief) => getRecipeDetail(r.id))
@@ -142,21 +142,21 @@ export default function FavoritesScreen() {
           coverMap.set(d.id, d.photos?.[0]?.url ?? null);
         }
       });
-      
+
       const recipesWithCovers = res.data.map((r: any) => ({
         ...r,
         _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
         isFavorited: true, // Todas as receitas na página de favoritos são favoritas
       }));
-      
+
       if (resetPage) {
         setRecipes(recipesWithCovers);
         setHasMore(res.data.length === 20);
       } else {
-        setRecipes(prev => [...prev, ...recipesWithCovers]);
+        setRecipes((prev) => [...prev, ...recipesWithCovers]);
         setHasMore(res.data.length === 20);
       }
-      
+
       setTotalResults(res.meta?.total || res.data.length);
     } catch (error) {
       console.error('Erro ao carregar favoritos:', error);
@@ -176,9 +176,12 @@ export default function FavoritesScreen() {
 
   // Busca com debounce para texto, imediata para outros filtros
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      loadFavorites(true);
-    }, filters.q ? 500 : 100);
+    const timeoutId = setTimeout(
+      () => {
+        loadFavorites(true);
+      },
+      filters.q ? 500 : 100
+    );
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
@@ -196,22 +199,26 @@ export default function FavoritesScreen() {
   const handleFavoriteToggle = (recipeId: string, isFavorited: boolean) => {
     if (!isFavorited) {
       // Se foi desfavoritado, remove da lista
-      setRecipes(prev => prev.filter(recipe => recipe.id !== recipeId));
-      setTotalResults(prev => Math.max(0, prev - 1));
-      
+      setRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
+      setTotalResults((prev) => Math.max(0, prev - 1));
+
       // Atualiza estatísticas
       if (stats) {
-        setStats(prev => prev ? {
-          ...prev,
-          totalFavorites: Math.max(0, prev.totalFavorites - 1)
-        } : null);
+        setStats((prev) =>
+          prev
+            ? {
+                ...prev,
+                totalFavorites: Math.max(0, prev.totalFavorites - 1),
+              }
+            : null
+        );
       }
     }
   };
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
       loadFavorites(false);
     }
   };
@@ -241,18 +248,14 @@ export default function FavoritesScreen() {
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value && value.trim() !== '' && value !== 'favorited_desc'
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value && value.trim() !== '' && value !== 'favorited_desc'
   );
 
   const renderFilterModal = () => (
-    <Modal
-      visible={showFilters}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
+    <Modal visible={showFilters} animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-white">
-        <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+        <View className="flex-row items-center justify-between border-b border-gray-200 p-4">
           <Pressable onPress={() => setShowFilters(false)}>
             <Text className="text-lg font-semibold text-primary">Cancelar</Text>
           </Pressable>
@@ -270,14 +273,14 @@ export default function FavoritesScreen() {
               {DIFFICULTY_OPTIONS.map((option) => (
                 <Pressable
                   key={option.value}
-                  onPress={() => setFilters(prev => ({ ...prev, difficulty: option.value }))}
-                  className={`px-4 py-2 rounded-full ${
+                  onPress={() => setFilters((prev) => ({ ...prev, difficulty: option.value }))}
+                  className={`rounded-full px-4 py-2 ${
                     filters.difficulty === option.value ? 'bg-primary' : 'bg-gray-100'
-                  }`}
-                >
-                  <Text className={`font-medium ${
-                    filters.difficulty === option.value ? 'text-white' : 'text-gray-700'
                   }`}>
+                  <Text
+                    className={`font-medium ${
+                      filters.difficulty === option.value ? 'text-white' : 'text-gray-700'
+                    }`}>
                     {option.label}
                   </Text>
                 </Pressable>
@@ -292,61 +295,61 @@ export default function FavoritesScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
+                  className="rounded-lg border border-gray-300 px-3 py-2"
                   placeholder="0"
                   value={filters.minPrep}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, minPrep: text }))}
+                  onChangeText={(text) => setFilters((prev) => ({ ...prev, minPrep: text }))}
                   keyboardType="numeric"
                 />
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
+                  className="rounded-lg border border-gray-300 px-3 py-2"
                   placeholder="120"
                   value={filters.maxPrep}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, maxPrep: text }))}
+                  onChangeText={(text) => setFilters((prev) => ({ ...prev, maxPrep: text }))}
                   keyboardType="numeric"
                 />
               </View>
             </View>
           </View>
 
-          {/* Tempo de Cozimento */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo de Cozimento (min)</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">
+              Tempo de Cozimento (min)
+            </Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
+                  className="rounded-lg border border-gray-300 px-3 py-2"
                   placeholder="0"
                   value={filters.minCook}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, minCook: text }))}
+                  onChangeText={(text) => setFilters((prev) => ({ ...prev, minCook: text }))}
                   keyboardType="numeric"
                 />
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className="px-3 py-2 rounded-lg border border-gray-300"
+                  className="rounded-lg border border-gray-300 px-3 py-2"
                   placeholder="180"
                   value={filters.maxCook}
-                  onChangeText={(text) => setFilters(prev => ({ ...prev, maxCook: text }))}
+                  onChangeText={(text) => setFilters((prev) => ({ ...prev, maxCook: text }))}
                   keyboardType="numeric"
                 />
               </View>
             </View>
           </View>
 
-          {/* Ingredientes */}
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
             <TextInput
-              className="px-3 py-2 rounded-lg border border-gray-300"
+              className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: frango, cebola, alho"
               value={filters.ingredients}
-              onChangeText={(text) => setFilters(prev => ({ ...prev, ingredients: text }))}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, ingredients: text }))}
             />
             <Text className="mt-1 text-xs text-gray-500">
               Separe múltiplos ingredientes com vírgula
@@ -357,10 +360,10 @@ export default function FavoritesScreen() {
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Autor</Text>
             <TextInput
-              className="px-3 py-2 rounded-lg border border-gray-300"
+              className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: João Silva"
               value={filters.authorName}
-              onChangeText={(text) => setFilters(prev => ({ ...prev, authorName: text }))}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, authorName: text }))}
             />
           </View>
 
@@ -368,10 +371,10 @@ export default function FavoritesScreen() {
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Calorias Máximas</Text>
             <TextInput
-              className="px-3 py-2 rounded-lg border border-gray-300"
+              className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: 500"
               value={filters.maxCalories}
-              onChangeText={(text) => setFilters(prev => ({ ...prev, maxCalories: text }))}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, maxCalories: text }))}
               keyboardType="numeric"
             />
           </View>
@@ -383,23 +386,24 @@ export default function FavoritesScreen() {
               {SORT_OPTIONS.map((option) => (
                 <Pressable
                   key={option.value}
-                  onPress={() => setFilters(prev => ({ ...prev, sort: option.value }))}
-                  className={`flex-row items-center p-3 rounded-lg ${
+                  onPress={() => setFilters((prev) => ({ ...prev, sort: option.value }))}
+                  className={`flex-row items-center rounded-lg p-3 ${
                     filters.sort === option.value ? 'bg-primary/10' : 'bg-gray-50'
-                  }`}
-                >
-                  <View className={`w-5 h-5 rounded-full border-2 mr-3 ${
-                    filters.sort === option.value 
-                      ? 'border-primary bg-primary' 
-                      : 'border-gray-300'
                   }`}>
+                  <View
+                    className={`mr-3 h-5 w-5 rounded-full border-2 ${
+                      filters.sort === option.value
+                        ? 'border-primary bg-primary'
+                        : 'border-gray-300'
+                    }`}>
                     {filters.sort === option.value && (
-                      <View className="w-2 h-2 rounded-full bg-white m-0.5" />
+                      <View className="m-0.5 h-2 w-2 rounded-full bg-white" />
                     )}
                   </View>
-                  <Text className={`font-medium ${
-                    filters.sort === option.value ? 'text-primary' : 'text-gray-700'
-                  }`}>
+                  <Text
+                    className={`font-medium ${
+                      filters.sort === option.value ? 'text-primary' : 'text-gray-700'
+                    }`}>
                     {option.label}
                   </Text>
                 </Pressable>
@@ -408,12 +412,9 @@ export default function FavoritesScreen() {
           </View>
         </ScrollView>
 
-        <View className="p-4 border-t border-gray-200">
-          <Pressable
-            onPress={() => setShowFilters(false)}
-            className="py-3 rounded-lg bg-primary"
-          >
-            <Text className="font-semibold text-center text-white">Aplicar Filtros</Text>
+        <View className="border-t border-gray-200 p-4">
+          <Pressable onPress={() => setShowFilters(false)} className="rounded-lg bg-primary py-3">
+            <Text className="text-center font-semibold text-white">Aplicar Filtros</Text>
           </Pressable>
         </View>
       </View>
@@ -423,23 +424,23 @@ export default function FavoritesScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="px-4 pt-12 pb-4 bg-white border-b border-gray-200">
-        <View className="flex-row gap-3 items-center">
+      <View className="border-b border-gray-200 bg-white px-4 pb-4 pt-12">
+        <View className="flex-row items-center gap-3">
           <Pressable onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.primary} />
           </Pressable>
-          
-          <View className="flex-row flex-1 items-center px-4 py-3 bg-gray-50 rounded-xl">
+
+          <View className="flex-1 flex-row items-center rounded-xl bg-gray-50 px-4 py-3">
             <Ionicons name="search-outline" size={20} color="#6B7280" />
             <TextInput
-              className="flex-1 py-2 ml-3 text-base"
+              className="ml-3 flex-1 py-2 text-base"
               placeholder="Buscar favoritos..."
               value={filters.q}
-              onChangeText={(text) => setFilters(prev => ({ ...prev, q: text }))}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, q: text }))}
               returnKeyType="search"
             />
             {filters.q.length > 0 && (
-              <Pressable onPress={() => setFilters(prev => ({ ...prev, q: '' }))}>
+              <Pressable onPress={() => setFilters((prev) => ({ ...prev, q: '' }))}>
                 <Ionicons name="close-circle" size={20} color="#9CA3AF" />
               </Pressable>
             )}
@@ -447,44 +448,18 @@ export default function FavoritesScreen() {
 
           <Pressable
             onPress={() => setShowFilters(true)}
-            className={`p-3 rounded-lg ${
-              hasActiveFilters ? 'bg-primary' : 'bg-gray-100'
-            }`}
-          >
-            <Ionicons 
-              name="options-outline" 
-              size={20} 
-              color={hasActiveFilters ? 'white' : colors.muted} 
+            className={`rounded-lg p-3 ${hasActiveFilters ? 'bg-primary' : 'bg-gray-100'}`}>
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={hasActiveFilters ? 'white' : colors.muted}
             />
           </Pressable>
         </View>
 
-        {/* Estatísticas */}
-        {stats && (
-          <View className="flex-row justify-between items-center mt-4">
-            <View className="flex-row gap-4 items-center">
-              <View className="flex-row items-center">
-                <Ionicons name="heart" size={16} color={colors.primary} />
-                <Text className="ml-1 text-sm font-medium text-gray-700">
-                  {stats.totalFavorites} favoritos
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <Ionicons name="time" size={16} color={colors.primary} />
-                <Text className="ml-1 text-sm font-medium text-gray-700">
-                  {stats.recentFavorites} recentes
-                </Text>
-              </View>
-            </View>
-            <Text className="text-sm text-gray-500">
-              {totalResults} {totalResults === 1 ? 'encontrado' : 'encontrados'}
-            </Text>
-          </View>
-        )}
-
         {/* Resultados */}
-        <View className="flex-row justify-between items-center mt-3">
-          <Text className="text-sm text-gray-600">
+        <View className="mt-3 flex-row items-center justify-between">
+          <Text className="text-md text-gray-700">
             {totalResults} {totalResults === 1 ? 'receita encontrada' : 'receitas encontradas'}
           </Text>
           {hasActiveFilters && (
@@ -497,7 +472,7 @@ export default function FavoritesScreen() {
 
       {/* Lista de Favoritos */}
       {loading && recipes.length === 0 ? (
-        <View className="flex-1 justify-center items-center">
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="mt-4 text-gray-600">Carregando favoritos...</Text>
         </View>
@@ -515,13 +490,15 @@ export default function FavoritesScreen() {
         <FlatList
           data={recipes}
           keyExtractor={(item) => item.id}
-           renderItem={({ item }) => <RecipeCard recipe={item} onFavoriteToggle={handleFavoriteToggle} />}
+          renderItem={({ item }) => (
+            <RecipeCard recipe={item} onFavoriteToggle={handleFavoriteToggle} />
+          )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={() => 
+          ListFooterComponent={() =>
             loading && recipes.length > 0 ? (
               <View className="items-center py-4">
                 <ActivityIndicator size="small" color={colors.primary} />

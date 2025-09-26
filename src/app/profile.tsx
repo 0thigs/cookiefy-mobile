@@ -72,12 +72,10 @@ export default function Profile() {
 
   return (
     <View className="flex-1 bg-white">
-      <View className="h-36 bg-orange-500" style={{ backgroundColor: '#F37A2D' }} />
-
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 140 }}>
-        <View className="items-center px-5 pt-3">
-          <View className="-mt-14 mb-2">
-            <View className="h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gray-400 shadow-lg">
+        <View className="items-center justify-between px-5 pt-3">
+          <View className="mb-2 ">
+            <View className="z-10 h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gray-400 shadow-lg">
               {me?.photoUrl ? (
                 <Image source={{ uri: me.photoUrl }} className="h-28 w-28 rounded-full" />
               ) : (
@@ -88,9 +86,8 @@ export default function Profile() {
 
           <Text className="mt-2 text-2xl font-bold text-gray-800">{me?.name ?? 'Chef'}</Text>
 
-          <View className="mt-2 w-full flex-row justify-between px-2">
-            <Text className="text-gray-500">Email</Text>
-            <Text className="text-gray-800">{me?.email ?? '-'}</Text>
+          <View className="mt-2 w-full flex-row justify-center px-2">
+            <Text className="text-center text-lg text-gray-800">{me?.email ?? '-'}</Text>
           </View>
 
           <View className="mt-6 w-full">
@@ -212,18 +209,17 @@ export default function Profile() {
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </Pressable>
             </View>
-
-            <Pressable
-              onPress={handleDelete}
-              disabled={loading}
-              className="items-center rounded-xl bg-red-500 py-4 shadow-sm active:bg-red-600">
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-base font-bold text-white">deletar conta</Text>
-              )}
-            </Pressable>
           </View>
+          <Pressable
+            onPress={handleDelete}
+            disabled={loading}
+            className="flex w-full items-center justify-center rounded-xl bg-red-500 p-4 shadow-sm active:bg-red-600">
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-base font-bold text-white">Deletar conta</Text>
+            )}
+          </Pressable>
         </View>
       </ScrollView>
 
