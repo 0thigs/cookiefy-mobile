@@ -16,8 +16,7 @@ export function useNavigation() {
         router.push('/favorites');
         break;
       case 'profile':
-        // TODO: Implementar página de perfil
-        router.push('/');
+        router.push('/profile');
         break;
       default:
         console.warn(`Tab não reconhecido: ${tabId}`);
