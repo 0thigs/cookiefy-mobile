@@ -50,3 +50,35 @@ async function readMessage(res: Response) {
     return '';
   }
 }
+
+export const http = {
+  get<T = any>(path: string, init?: RequestInit) {
+    return core(path, { ...init, method: 'GET' }) as Promise<T>;
+  },
+  post<T = any>(path: string, body?: unknown, init?: RequestInit) {
+    const headers = new Headers(init?.headers || {});
+    const hasBody = body !== undefined && body !== null;
+    if (hasBody) headers.set('Content-Type', 'application/json');
+    else headers.delete('Content-Type'); 
+
+    return core(path, {
+      ...init,
+      method: 'POST',
+      headers,
+      body: hasBody ? JSON.stringify(body) : undefined,
+    }) as Promise<T>;
+  },
+  patch<T = any>(path: string, body?: unknown, init?: RequestInit) {
+    const headers = new Headers(init?.headers || {});
+    headers.set('Content-Type', 'application/json');
+    return core(path, {
+      ...init,
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body ?? {}),
+    }) as Promise<T>;
+  },
+  delete<T = any>(path: string, init?: RequestInit) {
+    return core(path, { ...init, method: 'DELETE' }) as Promise<T>;
+  },
+};

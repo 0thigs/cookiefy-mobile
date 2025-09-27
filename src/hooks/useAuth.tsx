@@ -12,6 +12,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshMe: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -53,8 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace('/(auth)/welcome');
   }
 
+  async function refreshMe() {
+    const user = await apiFetchMe();
+    setMe(user);
+  }
+
   return (
-    <AuthContext.Provider value={{ me, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ me, loading, signIn, signUp, signOut, refreshMe }}>
       {children}
     </AuthContext.Provider>
   );
