@@ -128,6 +128,18 @@ export default function FavoritesScreen() {
   const computeErrors = (f: FavoritesFilters) => {
     const e: Record<string, string> = {};
 
+    const INT32_MAX_STR = '2147483647';
+    const exceedsMaxInt32 = (val?: string) => {
+      if (!val) return false;
+      const t = String(val).trim();
+      if (t === '') return false;
+      const digits = t.replace(/\D/g, '');
+      if (digits.length === 0) return false;
+      if (digits.length > 10) return true;
+      if (digits.length < 10) return false;
+      return digits > INT32_MAX_STR;
+    };
+
     const pair = (
       minField: keyof FavoritesFilters,
       maxField: keyof FavoritesFilters,
@@ -149,14 +161,28 @@ export default function FavoritesScreen() {
 
     // Campos que devem ser >= 0
     const nonNegative: (keyof FavoritesFilters)[] = [
-      'minPrep', 'maxPrep', 'minCook', 'maxCook',
-      'totalTimeMin', 'totalTimeMax', 'maxCalories',
-      'minProtein', 'maxCarbs', 'maxFat', 'minServings', 'maxServings'
+      'minPrep',
+      'maxPrep',
+      'minCook',
+      'maxCook',
+      'totalTimeMin',
+      'totalTimeMax',
+      'maxCalories',
+      'minProtein',
+      'maxCarbs',
+      'maxFat',
+      'minServings',
+      'maxServings',
     ];
     nonNegative.forEach((k) => {
-      const n = toNum(f[k] as string);
+      const v = f[k] as string;
+      const n = toNum(v);
       if (n != null && n < 0) {
         e[k as string] = 'Valor não pode ser negativo';
+        return;
+      }
+      if (exceedsMaxInt32(v)) {
+        e[k as string] = 'Valor excede o máximo permitido';
       }
     });
 
@@ -165,7 +191,7 @@ export default function FavoritesScreen() {
 
   const handleNumericChange = (field: keyof FavoritesFilters, text: string) => {
     const sanitized = (text || '').replace(/[^\d]/g, '');
-    setFilters((prev) => ({ ...prev, [field]: sanitized } as FavoritesFilters));
+    setFilters((prev) => ({ ...prev, [field]: sanitized }) as FavoritesFilters);
   };
 
   async function loadFavorites(resetPage = true) {
@@ -236,9 +262,12 @@ export default function FavoritesScreen() {
     const hasErr = Object.keys(errors).length > 0;
     if (hasErr) return;
 
-    const timeoutId = setTimeout(() => {
-      loadFavorites(true);
-    }, filters.q ? 500 : 100);
+    const timeoutId = setTimeout(
+      () => {
+        loadFavorites(true);
+      },
+      filters.q ? 500 : 100
+    );
 
     return () => clearTimeout(timeoutId);
   }, [filters, errors]);

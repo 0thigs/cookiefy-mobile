@@ -69,7 +69,7 @@ export default function SearchScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const { handleTabPress } = useNavigation();
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -119,11 +119,20 @@ export default function SearchScreen() {
   const computeErrors = useCallback((f: SearchFilters) => {
     const e: Record<string, string> = {};
 
-    const pair = (
-      minField: keyof SearchFilters,
-      maxField: keyof SearchFilters,
-      label: string
-    ) => {
+    const INT32_MAX_STR = '2147483647';
+    const exceedsMaxInt32 = (val?: string) => {
+      if (!val) return false;
+      const t = String(val).trim();
+      if (t === '') return false;
+      // only digits considered
+      const digits = t.replace(/\D/g, '');
+      if (digits.length === 0) return false;
+      if (digits.length > 10) return true;
+      if (digits.length < 10) return false;
+      return digits > INT32_MAX_STR;
+    };
+
+    const pair = (minField: keyof SearchFilters, maxField: keyof SearchFilters, label: string) => {
       const min = toNum(f[minField] as string);
       const max = toNum(f[maxField] as string);
       if (min != null && max != null && min > max) {
@@ -140,14 +149,28 @@ export default function SearchScreen() {
 
     // Campos que devem ser >= 0
     const nonNegative: (keyof SearchFilters)[] = [
-      'minPrep', 'maxPrep', 'minCook', 'maxCook',
-      'totalTimeMin', 'totalTimeMax', 'maxCalories',
-      'minProtein', 'maxCarbs', 'maxFat', 'minServings', 'maxServings'
+      'minPrep',
+      'maxPrep',
+      'minCook',
+      'maxCook',
+      'totalTimeMin',
+      'totalTimeMax',
+      'maxCalories',
+      'minProtein',
+      'maxCarbs',
+      'maxFat',
+      'minServings',
+      'maxServings',
     ];
     nonNegative.forEach((k) => {
-      const n = toNum(f[k] as string);
+      const v = f[k] as string;
+      const n = toNum(v);
       if (n != null && n < 0) {
         e[k as string] = 'Valor não pode ser negativo';
+        return;
+      }
+      if (exceedsMaxInt32(v)) {
+        e[k as string] = 'Valor excede o máximo permitido';
       }
     });
 
@@ -157,7 +180,7 @@ export default function SearchScreen() {
   const handleNumericChange = (field: keyof SearchFilters, text: string) => {
     // Mantém apenas dígitos para evitar negativos e caracteres inválidos
     const sanitized = (text || '').replace(/[^\d]/g, '');
-    setFilters((prev) => ({ ...prev, [field]: sanitized } as SearchFilters));
+    setFilters((prev) => ({ ...prev, [field]: sanitized }) as SearchFilters);
   };
 
   async function searchRecipes(resetPage = true) {
@@ -168,14 +191,14 @@ export default function SearchScreen() {
     setLoading(true);
     try {
       const page = resetPage ? 1 : currentPage;
-      const params = { 
-        ...searchParams, 
-        page, 
-        pageSize: 20 
+      const params = {
+        ...searchParams,
+        page,
+        pageSize: 20,
       };
-      
+
       const res = await listPublicRecipes(params);
-      
+
       const first = res.data.slice(0, 20);
       const details = await Promise.allSettled(
         first.map((r: RecipeBrief) => getRecipeDetail(r.id))
@@ -187,21 +210,21 @@ export default function SearchScreen() {
           coverMap.set(d.id, d.photos?.[0]?.url ?? null);
         }
       });
-      
+
       const recipesWithCovers = res.data.map((r: any) => ({
         ...r,
         _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
         isFavorited: r.isFavorited || false, // Inclui status de favorito
       }));
-      
+
       if (resetPage) {
         setRecipes(recipesWithCovers);
         setHasMore(res.data.length === 20);
       } else {
-        setRecipes(prev => [...prev, ...recipesWithCovers]);
+        setRecipes((prev) => [...prev, ...recipesWithCovers]);
         setHasMore(res.data.length === 20);
       }
-      
+
       setTotalResults(res.meta?.total || res.data.length);
     } catch (error) {
       console.error('Erro ao buscar receitas:', error);
@@ -220,9 +243,12 @@ export default function SearchScreen() {
     const hasErr = Object.keys(errors).length > 0;
     if (hasErr) return;
 
-    const timeoutId = setTimeout(() => {
-      searchRecipes(true);
-    }, filters.q ? 500 : 100);
+    const timeoutId = setTimeout(
+      () => {
+        searchRecipes(true);
+      },
+      filters.q ? 500 : 100
+    );
 
     return () => clearTimeout(timeoutId);
   }, [filters, errors]);
@@ -235,7 +261,7 @@ export default function SearchScreen() {
 
   const loadMore = () => {
     if (!loading && hasMore) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
       searchRecipes(false);
     }
   };
@@ -264,19 +290,14 @@ export default function SearchScreen() {
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value && value.trim() !== '' && value !== 'newest'
+  const hasActiveFilters = Object.values(filters).some(
+    (value) => value && value.trim() !== '' && value !== 'newest'
   );
 
-
   const renderFilterModal = () => (
-    <Modal
-      visible={showFilters}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
+    <Modal visible={showFilters} animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-white">
-        <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+        <View className="flex-row items-center justify-between border-b border-gray-200 p-4">
           <Pressable onPress={() => setShowFilters(false)}>
             <Text className="text-lg font-semibold text-primary">Cancelar</Text>
           </Pressable>
@@ -294,14 +315,14 @@ export default function SearchScreen() {
               {DIFFICULTY_OPTIONS.map((option) => (
                 <Pressable
                   key={option.value}
-                  onPress={() => setFilters(prev => ({ ...prev, difficulty: option.value }))}
-                  className={`px-4 py-2 rounded-full ${
+                  onPress={() => setFilters((prev) => ({ ...prev, difficulty: option.value }))}
+                  className={`rounded-full px-4 py-2 ${
                     filters.difficulty === option.value ? 'bg-primary' : 'bg-gray-100'
-                  }`}
-                >
-                  <Text className={`font-medium ${
-                    filters.difficulty === option.value ? 'text-white' : 'text-gray-700'
                   }`}>
+                  <Text
+                    className={`font-medium ${
+                      filters.difficulty === option.value ? 'text-white' : 'text-gray-700'
+                    }`}>
                     {option.label}
                   </Text>
                 </Pressable>
@@ -316,7 +337,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.minPrep ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.minPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
                   value={filters.minPrep}
                   onChangeText={(text) => handleNumericChange('minPrep', text)}
@@ -329,7 +350,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.maxPrep ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.maxPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="120"
                   value={filters.maxPrep}
                   onChangeText={(text) => handleNumericChange('maxPrep', text)}
@@ -344,12 +365,14 @@ export default function SearchScreen() {
 
           {/* Tempo de Cozimento */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo de Cozimento (min)</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">
+              Tempo de Cozimento (min)
+            </Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.minCook ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.minCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
                   value={filters.minCook}
                   onChangeText={(text) => handleNumericChange('minCook', text)}
@@ -362,7 +385,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.maxCook ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.maxCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="180"
                   value={filters.maxCook}
                   onChangeText={(text) => handleNumericChange('maxCook', text)}
@@ -382,7 +405,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.totalTimeMin ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.totalTimeMin ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="15"
                   value={filters.totalTimeMin}
                   onChangeText={(text) => handleNumericChange('totalTimeMin', text)}
@@ -395,7 +418,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.totalTimeMax ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.totalTimeMax ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="300"
                   value={filters.totalTimeMax}
                   onChangeText={(text) => handleNumericChange('totalTimeMax', text)}
@@ -412,10 +435,10 @@ export default function SearchScreen() {
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
             <TextInput
-              className="px-3 py-2 rounded-lg border border-gray-300"
+              className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: frango, cebola, alho"
               value={filters.ingredients}
-              onChangeText={(text) => setFilters(prev => ({ ...prev, ingredients: text }))}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, ingredients: text }))}
             />
             <Text className="mt-1 text-xs text-gray-500">
               Separe múltiplos ingredientes com vírgula
@@ -426,7 +449,7 @@ export default function SearchScreen() {
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Calorias Máximas</Text>
             <TextInput
-              className={`px-3 py-2 rounded-lg border ${errors.maxCalories ? 'border-red-500' : 'border-gray-300'}`}
+              className={`rounded-lg border px-3 py-2 ${errors.maxCalories ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Ex: 500"
               value={filters.maxCalories}
               onChangeText={(text) => handleNumericChange('maxCalories', text)}
@@ -444,7 +467,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.minServings ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.minServings ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="1"
                   value={filters.minServings}
                   onChangeText={(text) => handleNumericChange('minServings', text)}
@@ -457,7 +480,7 @@ export default function SearchScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className={`px-3 py-2 rounded-lg border ${errors.maxServings ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`rounded-lg border px-3 py-2 ${errors.maxServings ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="10"
                   value={filters.maxServings}
                   onChangeText={(text) => handleNumericChange('maxServings', text)}
@@ -477,23 +500,24 @@ export default function SearchScreen() {
               {SORT_OPTIONS.map((option) => (
                 <Pressable
                   key={option.value}
-                  onPress={() => setFilters(prev => ({ ...prev, sort: option.value }))}
-                  className={`flex-row items-center p-3 rounded-lg ${
+                  onPress={() => setFilters((prev) => ({ ...prev, sort: option.value }))}
+                  className={`flex-row items-center rounded-lg p-3 ${
                     filters.sort === option.value ? 'bg-primary/10' : 'bg-gray-50'
-                  }`}
-                >
-                  <View className={`w-5 h-5 rounded-full border-2 mr-3 ${
-                    filters.sort === option.value 
-                      ? 'border-primary bg-primary' 
-                      : 'border-gray-300'
                   }`}>
+                  <View
+                    className={`mr-3 h-5 w-5 rounded-full border-2 ${
+                      filters.sort === option.value
+                        ? 'border-primary bg-primary'
+                        : 'border-gray-300'
+                    }`}>
                     {filters.sort === option.value && (
-                      <View className="w-2 h-2 rounded-full bg-white m-0.5" />
+                      <View className="m-0.5 h-2 w-2 rounded-full bg-white" />
                     )}
                   </View>
-                  <Text className={`font-medium ${
-                    filters.sort === option.value ? 'text-primary' : 'text-gray-700'
-                  }`}>
+                  <Text
+                    className={`font-medium ${
+                      filters.sort === option.value ? 'text-primary' : 'text-gray-700'
+                    }`}>
                     {option.label}
                   </Text>
                 </Pressable>
@@ -502,12 +526,9 @@ export default function SearchScreen() {
           </View>
         </ScrollView>
 
-        <View className="p-4 border-t border-gray-200">
-          <Pressable
-            onPress={() => setShowFilters(false)}
-            className="py-3 rounded-lg bg-primary"
-          >
-            <Text className="font-semibold text-center text-white">Aplicar Filtros</Text>
+        <View className="border-t border-gray-200 p-4">
+          <Pressable onPress={() => setShowFilters(false)} className="rounded-lg bg-primary py-3">
+            <Text className="text-center font-semibold text-white">Aplicar Filtros</Text>
           </Pressable>
         </View>
       </View>
@@ -517,23 +538,23 @@ export default function SearchScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="px-4 pt-12 pb-4 bg-white border-b border-gray-200">
-        <View className="flex-row gap-3 items-center">
+      <View className="border-b border-gray-200 bg-white px-4 pb-4 pt-12">
+        <View className="flex-row items-center gap-3">
           <Pressable onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.primary} />
           </Pressable>
-          
-          <View className="flex-row flex-1 items-center px-4 py-3 bg-gray-50 rounded-xl">
+
+          <View className="flex-1 flex-row items-center rounded-xl bg-gray-50 px-4 py-3">
             <Ionicons name="search-outline" size={20} color="#6B7280" />
             <TextInput
-              className="flex-1 py-2 ml-3 text-base"
+              className="ml-3 flex-1 py-2 text-base"
               placeholder="Buscar receitas, ingredientes..."
               value={filters.q}
-              onChangeText={(text) => setFilters(prev => ({ ...prev, q: text }))}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, q: text }))}
               returnKeyType="search"
             />
             {filters.q.length > 0 && (
-              <Pressable onPress={() => setFilters(prev => ({ ...prev, q: '' }))}>
+              <Pressable onPress={() => setFilters((prev) => ({ ...prev, q: '' }))}>
                 <Ionicons name="close-circle" size={20} color="#9CA3AF" />
               </Pressable>
             )}
@@ -541,20 +562,17 @@ export default function SearchScreen() {
 
           <Pressable
             onPress={() => setShowFilters(true)}
-            className={`p-3 rounded-lg ${
-              hasActiveFilters ? 'bg-primary' : 'bg-gray-100'
-            }`}
-          >
-            <Ionicons 
-              name="options-outline" 
-              size={20} 
-              color={hasActiveFilters ? 'white' : colors.muted} 
+            className={`rounded-lg p-3 ${hasActiveFilters ? 'bg-primary' : 'bg-gray-100'}`}>
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={hasActiveFilters ? 'white' : colors.muted}
             />
           </Pressable>
         </View>
 
         {/* Resultados */}
-        <View className="flex-row justify-between items-center mt-3">
+        <View className="mt-3 flex-row items-center justify-between">
           <Text className="text-sm text-gray-600">
             {totalResults} {totalResults === 1 ? 'receita encontrada' : 'receitas encontradas'}
           </Text>
@@ -568,7 +586,7 @@ export default function SearchScreen() {
 
       {/* Lista de Receitas */}
       {loading && recipes.length === 0 ? (
-        <View className="flex-1 justify-center items-center">
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="mt-4 text-gray-600">Buscando receitas...</Text>
         </View>
@@ -592,7 +610,7 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={() => 
+          ListFooterComponent={() =>
             loading && recipes.length > 0 ? (
               <View className="items-center py-4">
                 <ActivityIndicator size="small" color={colors.primary} />
