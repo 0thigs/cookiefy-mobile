@@ -10,34 +10,47 @@ import {
   Switch,
 } from 'react-native';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { listCategories, type Category } from '../../services/categories';
 import { createRecipe, publishRecipe } from '../../services/recipes';
 import { router } from 'expo-router';
 import { colors } from '../../theme/colors';
 
+const nonNegativeNumericString = z
+  .string()
+  .optional()
+  .refine(
+    (v) => {
+      if (v == null || String(v).trim() === '') return true;
+      const n = Number(String(v).replace(',', '.'));
+      return Number.isFinite(n) && n >= 0;
+    },
+    { message: 'Valor não pode ser negativo' }
+  );
+
 const schema = z.object({
   title: z.string().min(2, 'Informe um título'),
   description: z.string().optional(),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
-  prepMinutes: z.string().optional(),
-  cookMinutes: z.string().optional(),
-  servings: z.string().optional(),
+  prepMinutes: nonNegativeNumericString,
+  cookMinutes: nonNegativeNumericString,
+  servings: nonNegativeNumericString,
   nutrition: z
   .object({
-    calories: z.string().optional(),   // kcal
-    protein: z.string().optional(),    // g
-    carbs: z.string().optional(),      // g
-    fat: z.string().optional(),        // g
-    fiber: z.string().optional(),      // g
-    sodium: z.string().optional(),     // mg
+    calories: nonNegativeNumericString,   // kcal
+    protein: nonNegativeNumericString,    // g
+    carbs: nonNegativeNumericString,      // g
+    fat: nonNegativeNumericString,        // g
+    fiber: nonNegativeNumericString,      // g
+    sodium: nonNegativeNumericString,     // mg
   })
   .optional(),
 
   steps: z.array(
     z.object({
       text: z.string().min(1, 'Descreva o passo'),
-      durationSec: z.string().optional(),
+      durationSec: nonNegativeNumericString,
     })
   ).optional(),
 
@@ -51,7 +64,7 @@ const schema = z.object({
   ingredients: z.array(
     z.object({
       name: z.string().min(1, 'Nome do ingrediente'),
-      amount: z.string().optional(),
+      amount: nonNegativeNumericString,
       unit: z.string().optional(),
     })
   ).optional(),
@@ -59,7 +72,8 @@ const schema = z.object({
   categoriesIds: z.array(z.string()).optional(),
   publishNow: z.boolean().default(true),
 });
-type FormData = z.infer<typeof schema>;
+type SchemaInput = z.input<typeof schema>;
+type SchemaOutput = z.output<typeof schema>;
 
 export default function NewRecipeScreen() {
   const [loadingCats, setLoadingCats] = useState(true);
@@ -72,7 +86,9 @@ export default function NewRecipeScreen() {
     setValue,
     getValues,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<SchemaInput, any, SchemaOutput>({
+    resolver: zodResolver(schema),
+    mode: 'onChange',
     defaultValues: {
       difficulty: 'MEDIUM',
       steps: [{ text: '', durationSec: '' }],
@@ -114,6 +130,26 @@ export default function NewRecipeScreen() {
     const n = Number(String(s).replace(',', '.').trim());
     return Number.isFinite(n) ? n : undefined;
   }
+
+  // Sanitização de inputs numéricos
+  const sanitizeInt = (text: string) => (text || '').replace(/[^\d]/g, '');
+  const sanitizeDec = (text: string) => {
+    const t = (text || '')
+      .replace(/[^0-9,\.]/g, '')
+      .replace(/\./g, ',');
+    let seen = false;
+    return t
+      .split('')
+      .filter((ch) => {
+        if (ch === ',') {
+          if (seen) return false;
+          seen = true;
+          return true;
+        }
+        return true;
+      })
+      .join('');
+  };
 
   const onSubmit = handleSubmit(async (form) => {
     setSubmitting(true);
@@ -247,14 +283,17 @@ export default function NewRecipeScreen() {
             name="prepMinutes"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.prepMinutes ? 'border-red-500' : 'border-gray-300'}`}
                 keyboardType="number-pad"
                 placeholder="ex.: 10"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeInt(t))}
               />
             )}
           />
+          {errors.prepMinutes && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.prepMinutes.message)}</Text>
+          )}
         </View>
         <View className="flex-1">
           <Text className="mb-1 font-medium">Cocção (min)</Text>
@@ -263,14 +302,17 @@ export default function NewRecipeScreen() {
             name="cookMinutes"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.cookMinutes ? 'border-red-500' : 'border-gray-300'}`}
                 keyboardType="number-pad"
                 placeholder="ex.: 20"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeInt(t))}
               />
             )}
           />
+          {errors.cookMinutes && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.cookMinutes.message)}</Text>
+          )}
         </View>
         <View className="flex-1">
           <Text className="mb-1 font-medium">Porções</Text>
@@ -279,14 +321,17 @@ export default function NewRecipeScreen() {
             name="servings"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.servings ? 'border-red-500' : 'border-gray-300'}`}
                 keyboardType="number-pad"
                 placeholder="ex.: 4"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeInt(t))}
               />
             )}
           />
+          {errors.servings && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.servings.message)}</Text>
+          )}
         </View>
       </View>
 
@@ -300,14 +345,17 @@ export default function NewRecipeScreen() {
             name="nutrition.calories"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.nutrition?.calories ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="ex.: 450"
                 keyboardType="number-pad"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeInt(t))}
               />
             )}
           />
+          {errors.nutrition?.calories && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.nutrition.calories.message)}</Text>
+          )}
         </View>
 
         <View className="flex-1">
@@ -317,14 +365,17 @@ export default function NewRecipeScreen() {
             name="nutrition.protein"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.nutrition?.protein ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="ex.: 20"
                 keyboardType="decimal-pad"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeDec(t))}
               />
             )}
           />
+          {errors.nutrition?.protein && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.nutrition.protein.message)}</Text>
+          )}
         </View>
       </View>
 
@@ -336,14 +387,17 @@ export default function NewRecipeScreen() {
             name="nutrition.carbs"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.nutrition?.carbs ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="ex.: 55"
                 keyboardType="decimal-pad"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeDec(t))}
               />
             )}
           />
+          {errors.nutrition?.carbs && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.nutrition.carbs.message)}</Text>
+          )}
         </View>
 
         <View className="flex-1">
@@ -353,14 +407,17 @@ export default function NewRecipeScreen() {
             name="nutrition.fat"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="px-4 py-3 mb-3 w-full rounded-lg border border-gray-300"
+                className={`px-4 py-3 mb-1 w-full rounded-lg border ${errors.nutrition?.fat ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="ex.: 12"
                 keyboardType="decimal-pad"
                 value={value}
-                onChangeText={onChange}
+                onChangeText={(t) => onChange(sanitizeDec(t))}
               />
             )}
           />
+          {errors.nutrition?.fat && (
+            <Text className="mb-2 text-xs text-red-600">{String(errors.nutrition.fat.message)}</Text>
+          )}
         </View>
       </View>
 
@@ -419,10 +476,13 @@ export default function NewRecipeScreen() {
                 control={control}
                 name={`ingredients.${idx}.amount` as const}
                 render={({ field: { onChange, value } }) => (
-                  <TextInput className="px-3 py-2 rounded-lg border border-gray-300" keyboardType="decimal-pad"
-                    placeholder="Ex.: 2" value={value} onChangeText={onChange} />
+                  <TextInput className={`px-3 py-2 rounded-lg border ${errors.ingredients?.[idx]?.amount ? 'border-red-500' : 'border-gray-300'}`} keyboardType="decimal-pad"
+                    placeholder="Ex.: 2" value={value} onChangeText={(t) => onChange(sanitizeDec(t))} />
                 )}
               />
+              {errors.ingredients?.[idx]?.amount && (
+                <Text className="mt-1 text-xs text-red-600">{String(errors.ingredients[idx]?.amount?.message)}</Text>
+              )}
             </View>
             <View className="flex-1">
               <Text className="mb-1 font-medium">Unidade</Text>
@@ -464,10 +524,13 @@ export default function NewRecipeScreen() {
             control={control}
             name={`steps.${idx}.durationSec` as const}
             render={({ field: { onChange, value } }) => (
-              <TextInput className="px-3 py-2 rounded-lg border border-gray-300"
-                keyboardType="number-pad" placeholder="Ex.: 60" value={value} onChangeText={onChange} />
+              <TextInput className={`px-3 py-2 rounded-lg border ${errors.steps?.[idx]?.durationSec ? 'border-red-500' : 'border-gray-300'}`}
+                keyboardType="number-pad" placeholder="Ex.: 60" value={value} onChangeText={(t) => onChange(sanitizeInt(t))} />
             )}
           />
+          {errors.steps?.[idx]?.durationSec && (
+            <Text className="mt-1 text-xs text-red-600">{String(errors.steps[idx]?.durationSec?.message)}</Text>
+          )}
           <Pressable className="self-end px-3 py-1 mt-2 rounded-lg border border-gray-300"
             onPress={() => steps.remove(idx)}>
             <Text className="text-gray-600">Remover</Text>
