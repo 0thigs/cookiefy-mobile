@@ -146,7 +146,7 @@ export default function FavoritesScreen() {
       const recipesWithCovers = res.data.map((r: any) => ({
         ...r,
         _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
-        isFavorited: true, // Todas as receitas na página de favoritos são favoritas
+        isFavorited: true,
       }));
 
       if (resetPage) {
@@ -174,7 +174,6 @@ export default function FavoritesScreen() {
     }
   }
 
-  // Busca com debounce para texto, imediata para outros filtros
   useEffect(() => {
     const timeoutId = setTimeout(
       () => {
@@ -198,11 +197,9 @@ export default function FavoritesScreen() {
 
   const handleFavoriteToggle = (recipeId: string, isFavorited: boolean) => {
     if (!isFavorited) {
-      // Se foi desfavoritado, remove da lista
       setRecipes((prev) => prev.filter((recipe) => recipe.id !== recipeId));
       setTotalResults((prev) => Math.max(0, prev - 1));
 
-      // Atualiza estatísticas
       if (stats) {
         setStats((prev) =>
           prev
@@ -288,7 +285,6 @@ export default function FavoritesScreen() {
             </View>
           </View>
 
-          {/* Tempo de Preparo */}
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo de Preparo (min)</Text>
             <View className="flex-row gap-3">
@@ -423,7 +419,6 @@ export default function FavoritesScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
       <View className="border-b border-gray-200 bg-white px-4 pb-4 pt-12">
         <View className="flex-row items-center gap-3">
           <Pressable onPress={() => router.back()}>
@@ -457,7 +452,6 @@ export default function FavoritesScreen() {
           </Pressable>
         </View>
 
-        {/* Resultados */}
         <View className="mt-3 flex-row items-center justify-between">
           <Text className="text-md text-gray-700">
             {totalResults} {totalResults === 1 ? 'receita encontrada' : 'receitas encontradas'}
@@ -470,7 +464,6 @@ export default function FavoritesScreen() {
         </View>
       </View>
 
-      {/* Lista de Favoritos */}
       {loading && recipes.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
