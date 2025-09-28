@@ -127,6 +127,18 @@ export async function getRecipeDetail(id: string) {
   return http.get<RecipeDetail>(`/recipes/${id}`);
 }
 
+// Drafts (authenticated)
+export async function listDraftRecipes(params?: { page?: number; pageSize?: number }) {
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 20;
+  const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return http.get<Paginated<RecipeBrief>>(`/recipes/drafts?${qs.toString()}`);
+}
+
+export async function getDraftDetail(id: string) {
+  return http.get<RecipeDetail>(`/recipes/drafts/${id}`);
+}
+
 export async function addFavorite(recipeId: string) {
   await http.post(`/favorites/${recipeId}`);
 }
@@ -219,3 +231,30 @@ export async function createRecipe(input: {
 export async function publishRecipe(id: string) {
   await http.post(`/recipes/${id}/publish`);
 }
+
+export async function updateRecipe(id: string, input: {
+  title?: string;
+  description?: string | null;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+  prepMinutes?: number | null;
+  cookMinutes?: number | null;
+  servings?: number | null;
+  nutrition?: Record<string, any> | null;
+  steps?: { order: number; text: string; durationSec?: number | null }[] | null;
+  photos?: { url: string; alt?: string | null; order?: number }[] | null;
+  ingredients?: { ingredientId?: string; name?: string; amount?: number | null; unit?: string | null }[] | null;
+  categories?: { categoryId: string }[] | null;
+}) {
+  return http.patch(`/recipes/${id}`, input);
+}
+export async function listMyRecipes(params?: { page?: number; pageSize?: number }) {
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 20;
+  const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return http.get<Paginated<RecipeBrief>>( `/recipes/mine?${qs.toString()}`); 
+}
+
+export async function deleteRecipe(id: string) {
+  return http.delete( `/recipes/${id}`); 
+}
+

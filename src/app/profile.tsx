@@ -90,7 +90,14 @@ export default function Profile() {
             <Text className="text-center text-lg text-gray-800">{me?.email ?? '-'}</Text>
           </View>
 
-          <View className="mt-6 w-full">
+          <Pressable
+            className="mt-6 w-full items-center rounded-lg border border-gray-200 bg-white px-4 py-3 active:bg-gray-50"
+            onPress={() => router.push('/settings')}
+          >
+            <Text className="text-base font-medium text-gray-800">Abrir configurações</Text>
+          </Pressable>
+
+          <View className="mt-4 w-full">
             <View className="mb-4 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
               <Pressable
                 className="flex-row items-center border-b border-gray-50 px-4 py-4 active:bg-gray-50"
@@ -170,9 +177,7 @@ export default function Profile() {
 
               <Pressable
                 className="flex-row items-center border-b border-gray-50 px-4 py-4 active:bg-gray-50"
-                onPress={() =>
-                  setExpandedSection((prev) => (prev === 'settings' ? null : 'settings'))
-                }>
+                onPress={() => router.push('/settings')}>
                 <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                   <Ionicons name="settings-outline" size={20} color="#3B82F6" />
                 </View>
@@ -185,7 +190,7 @@ export default function Profile() {
                 </View>
               </Pressable>
 
-              {expandedSection === 'settings' && (
+              {false && (
                 <View className="w-full bg-white px-4 py-4">
                   <Text className="mb-3 text-base text-gray-700">Ações rápidas</Text>
                   <Pressable

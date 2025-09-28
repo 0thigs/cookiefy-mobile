@@ -89,7 +89,7 @@ export default function Home() {
             <Pressable className="justify-center items-center w-12 h-12">
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
             </Pressable>
-            <Pressable className="justify-center items-center w-12 h-12" onPress={signOut}>
+            <Pressable className="justify-center items-center w-12 h-12" onPress={() => router.push('/settings')}>
               <Ionicons name="settings-outline" size={24} color={colors.text} />
             </Pressable>
           </View>

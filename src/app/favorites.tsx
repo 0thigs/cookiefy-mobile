@@ -77,6 +77,7 @@ export default function FavoritesScreen() {
     mostFavoritedCategory: string;
     averageRating: number;
   } | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { handleTabPress } = useNavigation();
 
@@ -114,6 +115,84 @@ export default function FavoritesScreen() {
 
     return params;
   }, [filters]);
+
+  // Helpers de validação e sanitização
+  const toNum = (v: string): number | null => {
+    if (v == null) return null;
+    const t = String(v).trim();
+    if (t === '') return null;
+    const n = parseInt(t, 10);
+    return Number.isNaN(n) ? null : n;
+  };
+
+  const computeErrors = (f: FavoritesFilters) => {
+    const e: Record<string, string> = {};
+
+    const INT32_MAX_STR = '2147483647';
+    const exceedsMaxInt32 = (val?: string) => {
+      if (!val) return false;
+      const t = String(val).trim();
+      if (t === '') return false;
+      const digits = t.replace(/\D/g, '');
+      if (digits.length === 0) return false;
+      if (digits.length > 10) return true;
+      if (digits.length < 10) return false;
+      return digits > INT32_MAX_STR;
+    };
+
+    const pair = (
+      minField: keyof FavoritesFilters,
+      maxField: keyof FavoritesFilters,
+      label: string
+    ) => {
+      const min = toNum(f[minField] as string);
+      const max = toNum(f[maxField] as string);
+      if (min != null && max != null && min > max) {
+        e[minField as string] = `${label}: mínimo maior que máximo`;
+        e[maxField as string] = `${label}: mínimo maior que máximo`;
+      }
+    };
+
+    // Pares de intervalo
+    pair('minPrep', 'maxPrep', 'Tempo de preparo');
+    pair('minCook', 'maxCook', 'Tempo de cozimento');
+    pair('totalTimeMin', 'totalTimeMax', 'Tempo total');
+    pair('minServings', 'maxServings', 'Porções');
+
+    // Campos que devem ser >= 0
+    const nonNegative: (keyof FavoritesFilters)[] = [
+      'minPrep',
+      'maxPrep',
+      'minCook',
+      'maxCook',
+      'totalTimeMin',
+      'totalTimeMax',
+      'maxCalories',
+      'minProtein',
+      'maxCarbs',
+      'maxFat',
+      'minServings',
+      'maxServings',
+    ];
+    nonNegative.forEach((k) => {
+      const v = f[k] as string;
+      const n = toNum(v);
+      if (n != null && n < 0) {
+        e[k as string] = 'Valor não pode ser negativo';
+        return;
+      }
+      if (exceedsMaxInt32(v)) {
+        e[k as string] = 'Valor excede o máximo permitido';
+      }
+    });
+
+    return e;
+  };
+
+  const handleNumericChange = (field: keyof FavoritesFilters, text: string) => {
+    const sanitized = (text || '').replace(/[^\d]/g, '');
+    setFilters((prev) => ({ ...prev, [field]: sanitized }) as FavoritesFilters);
+  };
 
   async function loadFavorites(resetPage = true) {
     if (resetPage) {
@@ -174,7 +253,15 @@ export default function FavoritesScreen() {
     }
   }
 
+  // Revalida ao mudar filtros e busca apenas se não houver erros
   useEffect(() => {
+    setErrors(computeErrors(filters));
+  }, [filters]);
+
+  useEffect(() => {
+    const hasErr = Object.keys(errors).length > 0;
+    if (hasErr) return;
+
     const timeoutId = setTimeout(
       () => {
         loadFavorites(true);
@@ -183,7 +270,7 @@ export default function FavoritesScreen() {
     );
 
     return () => clearTimeout(timeoutId);
-  }, [filters]);
+  }, [filters, errors]);
 
   useEffect(() => {
     loadStats();
@@ -291,22 +378,28 @@ export default function FavoritesScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className="rounded-lg border border-gray-300 px-3 py-2"
+                  className={`rounded-lg border px-3 py-2 ${errors.minPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
                   value={filters.minPrep}
-                  onChangeText={(text) => setFilters((prev) => ({ ...prev, minPrep: text }))}
+                  onChangeText={(text) => handleNumericChange('minPrep', text)}
                   keyboardType="numeric"
                 />
+                {errors.minPrep && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.minPrep}</Text>
+                )}
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className="rounded-lg border border-gray-300 px-3 py-2"
+                  className={`rounded-lg border px-3 py-2 ${errors.maxPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="120"
                   value={filters.maxPrep}
-                  onChangeText={(text) => setFilters((prev) => ({ ...prev, maxPrep: text }))}
+                  onChangeText={(text) => handleNumericChange('maxPrep', text)}
                   keyboardType="numeric"
                 />
+                {errors.maxPrep && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.maxPrep}</Text>
+                )}
               </View>
             </View>
           </View>
@@ -319,22 +412,28 @@ export default function FavoritesScreen() {
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
                 <TextInput
-                  className="rounded-lg border border-gray-300 px-3 py-2"
+                  className={`rounded-lg border px-3 py-2 ${errors.minCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
                   value={filters.minCook}
-                  onChangeText={(text) => setFilters((prev) => ({ ...prev, minCook: text }))}
+                  onChangeText={(text) => handleNumericChange('minCook', text)}
                   keyboardType="numeric"
                 />
+                {errors.minCook && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.minCook}</Text>
+                )}
               </View>
               <View className="flex-1">
                 <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
                 <TextInput
-                  className="rounded-lg border border-gray-300 px-3 py-2"
+                  className={`rounded-lg border px-3 py-2 ${errors.maxCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="180"
                   value={filters.maxCook}
-                  onChangeText={(text) => setFilters((prev) => ({ ...prev, maxCook: text }))}
+                  onChangeText={(text) => handleNumericChange('maxCook', text)}
                   keyboardType="numeric"
                 />
+                {errors.maxCook && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.maxCook}</Text>
+                )}
               </View>
             </View>
           </View>
@@ -342,7 +441,7 @@ export default function FavoritesScreen() {
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
             <TextInput
-              className="rounded-lg border border-gray-300 px-3 py-2"
+              className={`rounded-lg border px-3 py-2 ${errors.maxCalories ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Ex: frango, cebola, alho"
               value={filters.ingredients}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, ingredients: text }))}
@@ -361,6 +460,9 @@ export default function FavoritesScreen() {
               value={filters.authorName}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, authorName: text }))}
             />
+            {errors.maxCalories && (
+              <Text className="mt-1 text-xs text-red-600">{errors.maxCalories}</Text>
+            )}
           </View>
 
           {/* Calorias */}
@@ -370,7 +472,7 @@ export default function FavoritesScreen() {
               className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: 500"
               value={filters.maxCalories}
-              onChangeText={(text) => setFilters((prev) => ({ ...prev, maxCalories: text }))}
+              onChangeText={(text) => handleNumericChange('maxCalories', text)}
               keyboardType="numeric"
             />
           </View>
