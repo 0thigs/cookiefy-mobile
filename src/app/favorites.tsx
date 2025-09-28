@@ -537,9 +537,6 @@ export default function FavoritesScreen() {
               value={filters.authorName}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, authorName: text }))}
             />
-            {errors.maxCalories && (
-              <Text className="mt-1 text-xs text-red-600">{errors.maxCalories}</Text>
-            )}
           </View>
 
           {/* Calorias */}
@@ -552,6 +549,9 @@ export default function FavoritesScreen() {
               onChangeText={(text) => handleNumericChange('maxCalories', text)}
               keyboardType="numeric"
             />
+            {errors.maxCalories && (
+              <Text className="mt-1 text-xs text-red-600">{errors.maxCalories}</Text>
+            )}
           </View>
 
           {/* Ordenação */}
