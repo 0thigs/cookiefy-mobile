@@ -159,7 +159,7 @@ export default function FavoritesScreen() {
     pair('totalTimeMin', 'totalTimeMax', 'Tempo total');
     pair('minServings', 'maxServings', 'Porções');
 
-    // Campos que devem ser >= 0
+    // Campos que devem ser >= 0 (exceto porções)
     const nonNegative: (keyof FavoritesFilters)[] = [
       'minPrep',
       'maxPrep',
@@ -171,8 +171,6 @@ export default function FavoritesScreen() {
       'minProtein',
       'maxCarbs',
       'maxFat',
-      'minServings',
-      'maxServings',
     ];
     nonNegative.forEach((k) => {
       const v = f[k] as string;
@@ -180,6 +178,18 @@ export default function FavoritesScreen() {
       if (n != null && n < 0) {
         e[k as string] = 'Valor não pode ser negativo';
         return;
+      }
+      if (exceedsMaxInt32(v)) {
+        e[k as string] = 'Valor excede o máximo permitido';
+      }
+    });
+
+    // Porções devem ser >= 1
+    (['minServings', 'maxServings'] as (keyof FavoritesFilters)[]).forEach((k) => {
+      const v = f[k];
+      const n = toNum(v);
+      if (n != null && n < 1) {
+        e[k as string] = 'Porções deve ser no mínimo 1';
       }
       if (exceedsMaxInt32(v)) {
         e[k as string] = 'Valor excede o máximo permitido';
@@ -438,10 +448,44 @@ export default function FavoritesScreen() {
             </View>
           </View>
 
+          {/* Tempo Total */}
+          <View className="mb-6">
+            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo Total (min)</Text>
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <TextInput
+                  className={`rounded-lg border px-3 py-2 ${errors.totalTimeMin ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="0"
+                  value={filters.totalTimeMin}
+                  onChangeText={(text) => handleNumericChange('totalTimeMin', text)}
+                  keyboardType="numeric"
+                />
+                {errors.totalTimeMin && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.totalTimeMin}</Text>
+                )}
+              </View>
+              <View className="flex-1">
+                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <TextInput
+                  className={`rounded-lg border px-3 py-2 ${errors.totalTimeMax ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="300"
+                  value={filters.totalTimeMax}
+                  onChangeText={(text) => handleNumericChange('totalTimeMax', text)}
+                  keyboardType="numeric"
+                />
+                {errors.totalTimeMax && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.totalTimeMax}</Text>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Ingredientes */}
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
             <TextInput
-              className={`rounded-lg border px-3 py-2 ${errors.maxCalories ? 'border-red-500' : 'border-gray-300'}`}
+              className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: frango, cebola, alho"
               value={filters.ingredients}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, ingredients: text }))}
@@ -449,6 +493,39 @@ export default function FavoritesScreen() {
             <Text className="mt-1 text-xs text-gray-500">
               Separe múltiplos ingredientes com vírgula
             </Text>
+          </View>
+
+          {/* Porções */}
+          <View className="mb-6">
+            <Text className="mb-3 text-lg font-semibold text-gray-900">Porções</Text>
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <TextInput
+                  className={`rounded-lg border px-3 py-2 ${errors.minServings ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="1"
+                  value={filters.minServings}
+                  onChangeText={(text) => handleNumericChange('minServings', text)}
+                  keyboardType="numeric"
+                />
+                {errors.minServings && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.minServings}</Text>
+                )}
+              </View>
+              <View className="flex-1">
+                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <TextInput
+                  className={`rounded-lg border px-3 py-2 ${errors.maxServings ? 'border-red-500' : 'border-gray-300'}`}
+                  placeholder="10"
+                  value={filters.maxServings}
+                  onChangeText={(text) => handleNumericChange('maxServings', text)}
+                  keyboardType="numeric"
+                />
+                {errors.maxServings && (
+                  <Text className="mt-1 text-xs text-red-600">{errors.maxServings}</Text>
+                )}
+              </View>
+            </View>
           </View>
 
           {/* Autor */}

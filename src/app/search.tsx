@@ -39,6 +39,7 @@ interface SearchFilters {
   minServings: string;
   maxServings: string;
   sort: string;
+  authorName: string;
 }
 
 const DIFFICULTY_OPTIONS = [
@@ -92,6 +93,7 @@ export default function SearchScreen() {
     minServings: '',
     maxServings: '',
     sort: 'newest',
+    authorName: '',
   });
 
   const searchParams = useMemo(() => {
@@ -147,7 +149,7 @@ export default function SearchScreen() {
     pair('totalTimeMin', 'totalTimeMax', 'Tempo total');
     pair('minServings', 'maxServings', 'Porções');
 
-    // Campos que devem ser >= 0
+    // Campos que devem ser >= 0 (exceto porções)
     const nonNegative: (keyof SearchFilters)[] = [
       'minPrep',
       'maxPrep',
@@ -159,8 +161,6 @@ export default function SearchScreen() {
       'minProtein',
       'maxCarbs',
       'maxFat',
-      'minServings',
-      'maxServings',
     ];
     nonNegative.forEach((k) => {
       const v = f[k] as string;
@@ -168,6 +168,18 @@ export default function SearchScreen() {
       if (n != null && n < 0) {
         e[k as string] = 'Valor não pode ser negativo';
         return;
+      }
+      if (exceedsMaxInt32(v)) {
+        e[k as string] = 'Valor excede o máximo permitido';
+      }
+    });
+
+    // Porções devem ser >= 1
+    (['minServings', 'maxServings'] as (keyof SearchFilters)[]).forEach((k) => {
+      const v = f[k];
+      const n = toNum(v);
+      if (n != null && n < 1) {
+        e[k as string] = 'Porções deve ser no mínimo 1';
       }
       if (exceedsMaxInt32(v)) {
         e[k as string] = 'Valor excede o máximo permitido';
@@ -287,6 +299,7 @@ export default function SearchScreen() {
       minServings: '',
       maxServings: '',
       sort: 'newest',
+      authorName: '',
     });
   };
 
@@ -443,6 +456,17 @@ export default function SearchScreen() {
             <Text className="mt-1 text-xs text-gray-500">
               Separe múltiplos ingredientes com vírgula
             </Text>
+          </View>
+
+          {/* Autor */}
+          <View className="mb-6">
+            <Text className="mb-3 text-lg font-semibold text-gray-900">Autor</Text>
+            <TextInput
+              className="rounded-lg border border-gray-300 px-3 py-2"
+              placeholder="Ex: João Silva"
+              value={filters.authorName}
+              onChangeText={(text) => setFilters((prev) => ({ ...prev, authorName: text }))}
+            />
           </View>
 
           {/* Calorias */}
