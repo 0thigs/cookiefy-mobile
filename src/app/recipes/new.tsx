@@ -223,8 +223,10 @@ export default function NewRecipeScreen() {
   };
 
   const onSubmit = handleSubmit(async (form) => {
+  console.log('onSubmit chamado, form válido');
     setSubmitting(true);
     try {
+      console.log('Form submit:', form);
       const payload = {
         title: form.title.trim(),
         description: form.description?.trim() || null,
@@ -274,6 +276,7 @@ export default function NewRecipeScreen() {
 
       if (draftId) {
         const { updateRecipe, publishRecipe } = await import('../../services/recipes');
+        console.log('Update draft payload:', payload);
         await updateRecipe(String(draftId), payload as any);
         if (form.publishNow) {
           await publishRecipe(String(draftId));
@@ -285,13 +288,16 @@ export default function NewRecipeScreen() {
         );
       } else if (recipeId) {
         const { updateRecipe } = await import('../../services/recipes');
+        console.log('Update recipe payload:', payload);
         await updateRecipe(String(recipeId), payload as any);
         Alert.alert('Sucesso', 'Receita atualizada!', [
           { text: 'OK', onPress: () => router.replace('/settings') },
         ]);
       } else {
         const { createRecipe, publishRecipe } = await import('../../services/recipes');
+        console.log('Create recipe payload:', payload);
         const created = await createRecipe(payload as any);
+        console.log('Create recipe response:', created);
         if (form.publishNow) {
           await publishRecipe(created.id);
         }
@@ -300,6 +306,7 @@ export default function NewRecipeScreen() {
         ]);
       }
     } catch (e: any) {
+      console.log('Erro ao salvar receita:', e);
       if (e?.message !== 'nutrition_invalid') {
         Alert.alert('Erro', e?.message ?? 'Não foi possível salvar a receita');
       }
@@ -558,7 +565,7 @@ export default function NewRecipeScreen() {
         </View>
       </View>
 
-      <Text className="mb-2 text-lg font-semibold">Ingredientes</Text>
+      <Text className="mb-2 text-lg font-semibold">Ingredientes *</Text>
       {ingredients.fields.map((f, idx) => (
         <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
           <Text className="mb-1 font-medium">Nome</Text>
@@ -574,6 +581,11 @@ export default function NewRecipeScreen() {
               />
             )}
           />
+          {errors.ingredients?.[idx]?.name && (
+            <Text className="mt-1 text-xs text-red-600">
+              {String(errors.ingredients[idx]?.name?.message)}
+            </Text>
+          )}
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Text className="mb-1 font-medium">Quantidade</Text>
@@ -625,7 +637,7 @@ export default function NewRecipeScreen() {
         <Text className="font-medium text-gray-700">Adicionar ingrediente</Text>
       </Pressable>
 
-      <Text className="mb-2 text-lg font-semibold">Modo de preparo</Text>
+      <Text className="mb-2 text-lg font-semibold">Modo de preparo *</Text>
       {steps.fields.map((f, idx) => (
         <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
           <Text className="mb-1 font-medium">Passo {idx + 1}</Text>
@@ -642,6 +654,11 @@ export default function NewRecipeScreen() {
               />
             )}
           />
+          {errors.steps?.[idx]?.text && (
+            <Text className="mt-1 text-xs text-red-600">
+              {String(errors.steps[idx]?.text?.message)}
+            </Text>
+          )}
           <Text className="mb-1 font-medium">Duração (segundos, opcional)</Text>
           <Controller
             control={control}
@@ -674,7 +691,7 @@ export default function NewRecipeScreen() {
         <Text className="font-medium text-gray-700">Adicionar passo</Text>
       </Pressable>
 
-      <Text className="mb-2 text-lg font-semibold">Fotos (URL pública)</Text>
+      <Text className="mb-2 text-lg font-semibold">Fotos (URL pública) *</Text>
       {photos.fields.map((f, idx) => (
         <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
           <Text className="mb-1 font-medium">URL</Text>
@@ -691,6 +708,11 @@ export default function NewRecipeScreen() {
               />
             )}
           />
+          {errors.photos?.[idx]?.url && (
+            <Text className="mt-1 text-xs text-red-600">
+              {String(errors.photos[idx]?.url?.message)}
+            </Text>
+          )}
           <Text className="mb-1 font-medium">Alt (opcional)</Text>
           <Controller
             control={control}
@@ -760,7 +782,16 @@ export default function NewRecipeScreen() {
       {errors.root && <Text className="text-danger mb-2">{String(errors.root.message)}</Text>}
 
       <Pressable
-        onPress={onSubmit}
+        onPress={() => {
+          console.log('Botão Salvar receita clicado');
+          onSubmit();
+          setTimeout(() => {
+            // @ts-ignore
+            if (Object.keys(errors).length > 0) {
+              console.log('Erros de validação do formulário:', errors);
+            }
+          }, 100);
+        }}
         disabled={submitting}
         className="items-center rounded-lg bg-primary py-3">
         {submitting ? (
