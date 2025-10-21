@@ -78,6 +78,16 @@ export const http = {
       body: JSON.stringify(body ?? {}),
     }) as Promise<T>;
   },
+  put<T = any>(path: string, body?: unknown, init?: RequestInit) {
+    const headers = new Headers(init?.headers || {});
+    headers.set('Content-Type', 'application/json');
+    return core(path, {
+      ...init,
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body ?? {}),
+    }) as Promise<T>;
+  },
   delete<T = any>(path: string, init?: RequestInit) {
     return core(path, { ...init, method: 'DELETE' }) as Promise<T>;
   },

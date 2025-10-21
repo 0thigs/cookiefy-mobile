@@ -18,6 +18,7 @@ import { colors } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
 import { BottomNavBar } from '../../components/BottomNavBar';
+import { ReviewsTab } from '../../components/reviews/ReviewsTab';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -31,6 +32,7 @@ export default function RecipeDetailScreen() {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedTab, setSelectedTab] = useState<'details' | 'reviews'>('details');
 
   useEffect(() => {
     if (id) {
@@ -147,7 +149,7 @@ export default function RecipeDetailScreen() {
   if (loading) {
     return (
       <View className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center">
+        <View className="items-center justify-center flex-1">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="mt-4 text-gray-600">Carregando receita...</Text>
         </View>
@@ -158,7 +160,7 @@ export default function RecipeDetailScreen() {
   if (!recipe) {
     return (
       <View className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center px-8">
+        <View className="items-center justify-center flex-1 px-8">
           <Ionicons name="restaurant-outline" size={64} color={colors.muted} />
           <Text className="mt-4 text-lg font-semibold text-gray-900">Receita não encontrada</Text>
           <Text className="mt-2 text-center text-gray-600">
@@ -179,20 +181,19 @@ export default function RecipeDetailScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView className="flex-1">
-        {/* Header com foto de capa */}
-        <View className="relative">
-          <Image
+      {/* Header com foto de capa */}
+      <View className="relative">
+        <Image
             source={{ uri: coverPhoto }}
             style={{ width: screenWidth, height: 300 }}
             resizeMode="cover"
           />
           
           {/* Overlay com botões */}
-          <View className="absolute top-0 right-0 left-0 flex-row justify-between items-center p-4 pt-12">
+          <View className="absolute top-0 left-0 right-0 flex-row items-center justify-between p-4 pt-12">
             <Pressable
               onPress={() => router.back()}
-              className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
+              className="items-center justify-center w-10 h-10 rounded-full bg-black/40"
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </Pressable>
@@ -201,7 +202,7 @@ export default function RecipeDetailScreen() {
               <Pressable
                 onPress={toggleFavorite}
                 disabled={favoriteLoading}
-                className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
+                className="items-center justify-center w-10 h-10 rounded-full bg-black/40"
               >
                 {favoriteLoading ? (
                   <ActivityIndicator size="small" color="white" />
@@ -216,7 +217,7 @@ export default function RecipeDetailScreen() {
               
               <Pressable
                 onPress={shareRecipe}
-                className="justify-center items-center w-10 h-10 rounded-full bg-black/40"
+                className="items-center justify-center w-10 h-10 rounded-full bg-black/40"
               >
                 <Ionicons name="share-outline" size={24} color="white" />
               </Pressable>
@@ -224,7 +225,7 @@ export default function RecipeDetailScreen() {
           </View>
 
           {/* Informações sobrepostas na parte inferior */}
-          <View className="absolute right-0 bottom-0 left-0">
+          <View className="absolute bottom-0 left-0 right-0">
             {/* Overlay de fundo com gradiente mais escuro */}
             <View 
               style={{
@@ -256,7 +257,7 @@ export default function RecipeDetailScreen() {
                 {recipe.description}
               </Text>
               
-              <View className="flex-row flex-wrap gap-4 items-center">
+              <View className="flex-row flex-wrap items-center gap-4">
                 <View className="flex-row items-center px-3 py-1 rounded-full bg-black/30">
                   <Ionicons name="time-outline" size={16} color="white" />
                   <Text 
@@ -303,172 +304,215 @@ export default function RecipeDetailScreen() {
           </View>
         </View>
 
-        <View className="p-6">
-        {/* Informações do autor */}
-        <View className="flex-row items-center mb-6">
-          <View className="justify-center items-center mr-3 w-12 h-12 bg-gray-200 rounded-full">
-            {(author?.photoUrl || recipe.author?.photoUrl) ? (
-              <Image
-                source={{ uri: (author?.photoUrl || recipe.author?.photoUrl) || '' }}
-                style={{ width: 48, height: 48 }}
-                className="rounded-full"
-              />
-            ) : (
-              <Ionicons name="person" size={24} color={colors.muted} />
-            )}
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-gray-900">
-              {author?.name || recipe.author?.name || 'Chef Cookiefy'}
-            </Text>
-            <Text className="text-sm text-gray-600">
-              {new Date(recipe.createdAt).toLocaleDateString('pt-BR')}
-            </Text>
-          </View>
-        </View>
+      {/* Tabs Navigation */}
+      <View className="flex-row bg-white border-b border-gray-200">
+        <Pressable
+          onPress={() => setSelectedTab('details')}
+          className={`flex-1 justify-center items-center py-4 border-b-2 ${
+            selectedTab === 'details' ? 'border-primary' : 'border-transparent'
+          }`}
+        >
+          <Text
+            className={`font-semibold ${
+              selectedTab === 'details' ? 'text-primary' : 'text-gray-500'
+            }`}
+          >
+            Detalhes
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setSelectedTab('reviews')}
+          className={`flex-1 justify-center items-center py-4 border-b-2 ${
+            selectedTab === 'reviews' ? 'border-primary' : 'border-transparent'
+          }`}
+        >
+          <Text
+            className={`font-semibold ${
+              selectedTab === 'reviews' ? 'text-primary' : 'text-gray-500'
+            }`}
+          >
+            Avaliações
+          </Text>
+        </Pressable>
+      </View>
 
-        {/* Dificuldade e categorias */}
-        <View className="mb-6">
-          <View className="flex-row items-center mb-3">
-            <Text className="mr-3 text-lg font-semibold text-gray-900">Dificuldade:</Text>
-            <View 
-              className="px-3 py-1 rounded-full"
-              style={{ backgroundColor: getDifficultyColor(recipe.difficulty) + '20' }}
-            >
-              <Text 
-                className="font-medium"
-                style={{ color: getDifficultyColor(recipe.difficulty) }}
-              >
-                {getDifficultyText(recipe.difficulty)}
-              </Text>
+      {/* Tab Content */}
+      {selectedTab === 'details' ? (
+        <ScrollView className="flex-1">
+          <View className="p-6">
+            {/* Informações do autor */}
+            <View className="flex-row items-center mb-6">
+              <View className="items-center justify-center w-12 h-12 mr-3 bg-gray-200 rounded-full">
+                {(author?.photoUrl || recipe.author?.photoUrl) ? (
+                  <Image
+                    source={{ uri: (author?.photoUrl || recipe.author?.photoUrl) || '' }}
+                    style={{ width: 48, height: 48 }}
+                    className="rounded-full"
+                  />
+                ) : (
+                  <Ionicons name="person" size={24} color={colors.muted} />
+                )}
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-gray-900">
+                  {author?.name || recipe.author?.name || 'Chef Cookiefy'}
+                </Text>
+                <Text className="text-sm text-gray-600">
+                  {new Date(recipe.createdAt).toLocaleDateString('pt-BR')}
+                </Text>
+              </View>
             </View>
-          </View>
-          
-          {recipe.categories && recipe.categories.length > 0 && (
-            <View className="flex-row flex-wrap">
-              {recipe.categories.map((category) => (
-                <View
-                  key={category.id}
-                  className="px-3 py-1 mr-2 mb-2 bg-gray-100 rounded-full"
+
+            {/* Dificuldade e categorias */}
+            <View className="mb-6">
+              <View className="flex-row items-center mb-3">
+                <Text className="mr-3 text-lg font-semibold text-gray-900">Dificuldade:</Text>
+                <View 
+                  className="px-3 py-1 rounded-full"
+                  style={{ backgroundColor: getDifficultyColor(recipe.difficulty) + '20' }}
                 >
-                  <Text className="text-sm text-gray-700">{category.name}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Informações nutricionais */}
-        {recipe.nutrition && (
-          <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Informações Nutricionais</Text>
-            <View className="p-4 bg-gray-50 rounded-lg">
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-600">Calorias:</Text>
-                <Text className="font-medium">{formatNutritionValue(recipe.nutrition.calories, ' kcal')}</Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-600">Proteína:</Text>
-                <Text className="font-medium">{formatNutritionValue(recipe.nutrition.protein, 'g')}</Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-600">Carboidratos:</Text>
-                <Text className="font-medium">{formatNutritionValue(recipe.nutrition.carbs, 'g')}</Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-600">Gorduras:</Text>
-                <Text className="font-medium">{formatNutritionValue(recipe.nutrition.fat, 'g')}</Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-600">Fibra:</Text>
-                <Text className="font-medium">{formatNutritionValue(recipe.nutrition.fiber, 'g')}</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-gray-600">Sódio:</Text>
-                <Text className="font-medium">{formatNutritionValue(recipe.nutrition.sodium, 'mg')}</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Ingredientes */}
-        {recipe.ingredients && recipe.ingredients.length > 0 && (
-          <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
-            <View className="p-4 bg-gray-50 rounded-lg">
-              {recipe.ingredients.map((ingredient, index) => (
-                <View key={index} className="flex-row items-center py-2 border-b border-gray-200 last:border-b-0">
-                  <View className="mr-3 w-2 h-2 rounded-full bg-primary" />
-                  <Text className="flex-1 text-gray-700">
-                    {ingredient.amount && ingredient.unit 
-                      ? `${ingredient.amount} ${ingredient.unit} de ${ingredient.name}`
-                      : ingredient.name
-                    }
+                  <Text 
+                    className="font-medium"
+                    style={{ color: getDifficultyColor(recipe.difficulty) }}
+                  >
+                    {getDifficultyText(recipe.difficulty)}
                   </Text>
                 </View>
-              ))}
+              </View>
+              
+              {recipe.categories && recipe.categories.length > 0 && (
+                <View className="flex-row flex-wrap">
+                  {recipe.categories.map((category) => (
+                    <View
+                      key={category.id}
+                      className="px-3 py-1 mb-2 mr-2 bg-gray-100 rounded-full"
+                    >
+                      <Text className="text-sm text-gray-700">{category.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
-          </View>
-        )}
 
-        {/* Modo de preparo */}
-        {recipe.steps && recipe.steps.length > 0 && (
-          <View className="mb-6">
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-lg font-semibold text-gray-900">Modo de Preparo</Text>
-              <Pressable
-                onPress={() => router.push({
-                  pathname: `/recipes/${id}/steps`,
-                  params: {
-                    steps: JSON.stringify(recipe.steps),
-                    title: recipe.title
-                  }
-                })}
-                className="flex-row items-center px-4 py-2 rounded-lg bg-primary"
-              >
-                <Ionicons name="play-outline" size={16} color="white" />
-                <Text className="ml-2 font-semibold text-white">Modo Passo a Passo</Text>
-              </Pressable>
-            </View>
-            <View className="space-y-4">
-              {recipe.steps.map((step, index) => (
-                <View key={index} className="flex-row">
-                  <View className="flex-shrink-0 justify-center items-center mr-4 w-8 h-8 rounded-full bg-primary">
-                    <Text className="text-sm font-semibold text-white">{step.order + 1}</Text>
+            {/* Informações nutricionais */}
+            {recipe.nutrition && (
+              <View className="mb-6">
+                <Text className="mb-3 text-lg font-semibold text-gray-900">Informações Nutricionais</Text>
+                <View className="p-4 rounded-lg bg-gray-50">
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Calorias:</Text>
+                    <Text className="font-medium">{formatNutritionValue(recipe.nutrition.calories, ' kcal')}</Text>
                   </View>
-                  <View className="flex-1">
-                    <Text className="leading-6 text-gray-700">{step.text}</Text>
-                    {step.durationSec && (
-                      <Text className="mt-1 text-sm text-gray-500">
-                        <Ionicons name="time-outline" size={14} color={colors.muted} />
-                        {' '}{Math.floor(step.durationSec / 60)}min
-                      </Text>
-                    )}
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Proteína:</Text>
+                    <Text className="font-medium">{formatNutritionValue(recipe.nutrition.protein, 'g')}</Text>
+                  </View>
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Carboidratos:</Text>
+                    <Text className="font-medium">{formatNutritionValue(recipe.nutrition.carbs, 'g')}</Text>
+                  </View>
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Gorduras:</Text>
+                    <Text className="font-medium">{formatNutritionValue(recipe.nutrition.fat, 'g')}</Text>
+                  </View>
+                  <View className="flex-row justify-between mb-2">
+                    <Text className="text-gray-600">Fibra:</Text>
+                    <Text className="font-medium">{formatNutritionValue(recipe.nutrition.fiber, 'g')}</Text>
+                  </View>
+                  <View className="flex-row justify-between">
+                    <Text className="text-gray-600">Sódio:</Text>
+                    <Text className="font-medium">{formatNutritionValue(recipe.nutrition.sodium, 'mg')}</Text>
                   </View>
                 </View>
-              ))}
-            </View>
-          </View>
-        )}
+              </View>
+            )}
 
-        {/* Fotos adicionais */}
-        {recipe.photos && recipe.photos.length > 1 && (
-          <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Mais Fotos</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {recipe.photos.slice(1).map((photo, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: photo.url }}
-                  style={{ width: 120, height: 120, marginRight: 12 }}
-                  className="rounded-lg"
-                />
-              ))}
-            </ScrollView>
+            {/* Ingredientes */}
+            {recipe.ingredients && recipe.ingredients.length > 0 && (
+              <View className="mb-6">
+                <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
+                <View className="p-4 rounded-lg bg-gray-50">
+                  {recipe.ingredients.map((ingredient, index) => (
+                    <View key={index} className="flex-row items-center py-2 border-b border-gray-200 last:border-b-0">
+                      <View className="w-2 h-2 mr-3 rounded-full bg-primary" />
+                      <Text className="flex-1 text-gray-700">
+                        {ingredient.amount && ingredient.unit 
+                          ? `${ingredient.amount} ${ingredient.unit} de ${ingredient.name}`
+                          : ingredient.name
+                        }
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Modo de preparo */}
+            {recipe.steps && recipe.steps.length > 0 && (
+              <View className="mb-6">
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text className="text-lg font-semibold text-gray-900">Modo de Preparo</Text>
+                  <Pressable
+                    onPress={() => router.push({
+                      pathname: `/recipes/${id}/steps`,
+                      params: {
+                        steps: JSON.stringify(recipe.steps),
+                        title: recipe.title
+                      }
+                    })}
+                    className="flex-row items-center px-4 py-2 rounded-lg bg-primary"
+                  >
+                    <Ionicons name="play-outline" size={16} color="white" />
+                    <Text className="ml-2 font-semibold text-white">Modo Passo a Passo</Text>
+                  </Pressable>
+                </View>
+                <View className="space-y-4">
+                  {recipe.steps.map((step, index) => (
+                    <View key={index} className="flex-row">
+                      <View className="items-center justify-center flex-shrink-0 w-8 h-8 mr-4 rounded-full bg-primary">
+                        <Text className="text-sm font-semibold text-white">{step.order + 1}</Text>
+                      </View>
+                      <View className="flex-1">
+                        <Text className="leading-6 text-gray-700">{step.text}</Text>
+                        {step.durationSec && (
+                          <Text className="mt-1 text-sm text-gray-500">
+                            <Ionicons name="time-outline" size={14} color={colors.muted} />
+                            {' '}{Math.floor(step.durationSec / 60)}min
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Fotos adicionais */}
+            {recipe.photos && recipe.photos.length > 1 && (
+              <View className="mb-6">
+                <Text className="mb-3 text-lg font-semibold text-gray-900">Mais Fotos</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {recipe.photos.slice(1).map((photo, index) => (
+                    <Image
+                      key={index}
+                      source={{ uri: photo.url }}
+                      style={{ width: 120, height: 120, marginRight: 12 }}
+                      className="rounded-lg"
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
-        )}
-        </View>
-      </ScrollView>
+        </ScrollView>
+
+      ) : (
+        <ReviewsTab
+          recipeId={recipe.id}
+          currentUserId={me?.id}
+        />
+      )}
+
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
     </View>
   );
