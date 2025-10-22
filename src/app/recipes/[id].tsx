@@ -8,6 +8,7 @@ import {
   Pressable,
   Image,
   Share,
+  Linking,
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { getRecipeDetail, addFavorite, removeFavorite, type RecipeDetail } from '../../services/recipes';
 import { getUserById, type User } from '../../services/users';
 import { addRecipeToList, addItemToList } from '../../services/shopping-list';
+import { API_BASE_URL } from '../../lib/config';
 import { colors } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
@@ -114,6 +116,18 @@ export default function RecipeDetailScreen() {
       });
     } catch (error) {
       console.log('Erro ao compartilhar:', error);
+    }
+  }
+
+  async function handleDownloadPdf() {
+    if (!recipe?.id) return;
+    try {
+      const url = `${API_BASE_URL}/recipes/${recipe.id}/pdf`;
+      // abrir no navegador/handler do SO para permitir download
+      await Linking.openURL(url);
+    } catch (error: any) {
+      console.error('Erro ao abrir PDF:', error);
+      Alert.alert('Erro', 'Não foi possível abrir o PDF da receita');
     }
   }
 
@@ -272,6 +286,13 @@ export default function RecipeDetailScreen() {
                 className="items-center justify-center w-10 h-10 rounded-full bg-black/40"
               >
                 <Ionicons name="share-outline" size={24} color="white" />
+              </Pressable>
+              
+              <Pressable
+                onPress={handleDownloadPdf}
+                className="items-center justify-center w-10 h-10 rounded-full bg-black/40"
+              >
+                <Ionicons name="download-outline" size={22} color="white" />
               </Pressable>
             </View>
           </View>
