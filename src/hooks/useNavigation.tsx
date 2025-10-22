@@ -12,6 +12,9 @@ export function useNavigation() {
       case 'search':
         router.push('/search');
         break;
+      case 'shoppingList':
+        router.push('/shopping-list');
+        break;
       case 'favorites':
         router.push('/favorites');
         break;

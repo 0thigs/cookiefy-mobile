@@ -29,6 +29,12 @@ const NAV_ITEMS: NavItem[] = [
     activeIcon: 'search',
   },
   {
+    id: 'shoppingList',
+    label: 'Lista',
+    icon: 'cart-outline',
+    activeIcon: 'cart',
+  },
+  {
     id: 'favorites',
     label: 'Favoritos',
     icon: 'heart-outline',

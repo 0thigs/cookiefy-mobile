@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getRecipeDetail, addFavorite, removeFavorite, type RecipeDetail } from '../../services/recipes';
 import { getUserById, type User } from '../../services/users';
+import { addRecipeToList, addItemToList } from '../../services/shopping-list';
 import { colors } from '../../theme/colors';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
@@ -33,6 +34,7 @@ export default function RecipeDetailScreen() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('home');
   const [selectedTab, setSelectedTab] = useState<'details' | 'reviews'>('details');
+  const [addingToList, setAddingToList] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -144,6 +146,56 @@ export default function RecipeDetailScreen() {
   function formatNutritionValue(value?: number, unit?: string) {
     if (value === undefined || value === null) return 'N/A';
     return `${value}${unit || ''}`;
+  }
+
+  async function handleAddAllIngredientsToList() {
+    if (!recipe || addingToList) return;
+
+    setAddingToList(true);
+    try {
+      const result = await addRecipeToList(recipe.id);
+      Alert.alert(
+        'Sucesso!',
+        `${result.count} ${result.count === 1 ? 'ingrediente adicionado' : 'ingredientes adicionados'} à lista de compras`,
+        [
+          { text: 'OK' },
+          { text: 'Ver Lista', onPress: () => router.push('/shopping-list') }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert('Erro', 'Não foi possível adicionar os ingredientes à lista');
+    } finally {
+      setAddingToList(false);
+    }
+  }
+
+  async function handleAddSingleIngredient(ingredient: {
+    name: string;
+    amount?: number | null;
+    unit?: string | null;
+  }) {
+    if (addingToList) return;
+
+    setAddingToList(true);
+    try {
+      await addItemToList({
+        note: ingredient.name,
+        amount: ingredient.amount || 1,
+        unit: ingredient.unit || 'un',
+      });
+      Alert.alert(
+        'Adicionado!',
+        `${ingredient.name} foi adicionado à lista de compras`,
+        [
+          { text: 'OK' },
+          { text: 'Ver Lista', onPress: () => router.push('/shopping-list') }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert('Erro', 'Não foi possível adicionar o ingrediente à lista');
+    } finally {
+      setAddingToList(false);
+    }
   }
 
   if (loading) {
@@ -430,7 +482,25 @@ export default function RecipeDetailScreen() {
             {/* Ingredientes */}
             {recipe.ingredients && recipe.ingredients.length > 0 && (
               <View className="mb-6">
-                <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text className="text-lg font-semibold text-gray-900">Ingredientes</Text>
+                  <Pressable
+                    onPress={handleAddAllIngredientsToList}
+                    disabled={addingToList}
+                    className="flex-row items-center px-4 py-2 rounded-lg bg-primary"
+                  >
+                    {addingToList ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <>
+                        <Ionicons name="cart-outline" size={16} color="white" />
+                        <Text className="ml-2 text-sm font-semibold text-white">
+                          Adicionar Todos
+                        </Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
                 <View className="p-4 rounded-lg bg-gray-50">
                   {recipe.ingredients.map((ingredient, index) => (
                     <View key={index} className="flex-row items-center py-2 border-b border-gray-200 last:border-b-0">
@@ -441,6 +511,13 @@ export default function RecipeDetailScreen() {
                           : ingredient.name
                         }
                       </Text>
+                      <Pressable
+                        onPress={() => handleAddSingleIngredient(ingredient)}
+                        disabled={addingToList}
+                        className="p-2 ml-2 rounded-lg bg-primary/10"
+                      >
+                        <Ionicons name="add" size={20} color={colors.primary} />
+                      </Pressable>
                     </View>
                   ))}
                 </View>
