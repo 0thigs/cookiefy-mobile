@@ -28,6 +28,7 @@
     },
     "android": {
       "package": "com.cookiefy.mobile",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "~/assets/images/logo.png",
         "backgroundColor": "#ffffff"
@@ -38,7 +39,11 @@
       }
     },
     "extra": {
-      "apiBaseUrl": "http://10.0.2.2:3333"
+      "apiBaseUrl": "http://192.168.0.10:3333",
+      "router": {},
+      "eas": {
+        "projectId": "20e0f1aa-6a0f-4dfe-b4f6-e1a0f9ca5886"
+      }
     }
   }
 }

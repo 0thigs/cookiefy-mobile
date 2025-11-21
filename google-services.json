@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "370857998112",
+    "project_id": "cookiefy-app",
+    "storage_bucket": "cookiefy-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370857998112:android:3d8d2fd1721ad3140c4945",
+        "android_client_info": {
+          "package_name": "com.cookiefy.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7sqNcxjhzROVCtI2ImJAAsxcnLsvXFeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
