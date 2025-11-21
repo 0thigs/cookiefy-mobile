@@ -5,9 +5,15 @@ export type RecipeBrief = {
   title: string;
   description?: string | null;
   authorId: string;
+  author?: {
+    id: string;
+    name: string;
+    photoUrl?: string | null;
+  };
   createdAt: string; 
-  coverUrl?: string | null; // pode não vir do server ainda (fallback buscado no detalhe)
-  isFavorited?: boolean; // status de favorito (vem da API)
+  status?: 'DRAFT' | 'PUBLISHED' | 'REJECTED';
+  coverUrl?: string | null; 
+  isFavorited?: boolean; 
   ingredients?: {
     ingredientId: string;
     name: string;
@@ -97,7 +103,7 @@ export type RecipeDetail = {
     name: string;
     photoUrl?: string | null;
   };
-  authorId?: string; // Fallback caso a API retorne apenas o ID
+  authorId?: string; 
   categories?: {
     id: string;
     name: string;
@@ -127,7 +133,6 @@ export async function getRecipeDetail(id: string) {
   return http.get<RecipeDetail>(`/recipes/${id}`);
 }
 
-// Drafts (authenticated)
 export async function listDraftRecipes(params?: { page?: number; pageSize?: number }) {
   const page = params?.page ?? 1;
   const pageSize = params?.pageSize ?? 20;
@@ -180,14 +185,12 @@ export async function getFavorites(params?: {
     pageSize: String(pageSize),
   };
 
-  // Adicionar apenas parâmetros não vazios
   Object.entries(params || {}).forEach(([key, value]) => {
     if (value && String(value).trim() !== '' && key !== 'page' && key !== 'pageSize') {
       queryParams[key] = String(value);
     }
   });
 
-  // Adicionar sort padrão se não especificado
   if (!queryParams.sort) {
     queryParams.sort = 'favorited_desc';
   }

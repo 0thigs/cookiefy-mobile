@@ -97,6 +97,25 @@ export default function Profile() {
             <Text className="text-base font-medium text-gray-800">Abrir configurações</Text>
           </Pressable>
 
+          {me?.role === 'ADMIN' && (
+            <View className="mt-4 w-full">
+              <View className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                <Pressable
+                  className="flex-row items-center px-4 py-4 active:bg-gray-50"
+                  onPress={() => router.push('/admin/dashboard')}
+                >
+                  <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                    <Ionicons name="shield-checkmark-outline" size={20} color="#9333EA" />
+                  </View>
+                  <Text className="flex-1 text-base font-medium text-gray-800">
+                    Painel Administrativo
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           <View className="mt-4 w-full">
             <View className="mb-4 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
               <Pressable
