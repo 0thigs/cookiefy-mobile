@@ -25,3 +25,5 @@ android
 contexto.txt
 
 *.ps1
+
+.env

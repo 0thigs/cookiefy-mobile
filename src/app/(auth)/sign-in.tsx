@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +14,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function SignIn() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const { register, setValue, handleSubmit, formState } = useForm<FormData>({ resolver: zodResolver(schema) });
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
@@ -32,12 +32,49 @@ export default function SignIn() {
     }
   });
 
+  const handleGoogleLogin = async () => {
+    setServerError(null);
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (e: any) {
+      // Ignorar erro de cancelamento do usuário se desejar
+      if (e?.message !== 'Login cancelado pelo usuário') {
+        Alert.alert('Erro', e?.message ?? 'Falha no login com Google');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasPwdError = !!formState.errors.password?.message;
 
   return (
     <View className="flex-1 px-6 pt-8 bg-white">
       <Text className="mb-2 text-3xl font-bold text-center">Bem-vindo de volta!</Text>
       <Text className="mb-8 text-center text-gray-500">Entre em sua conta para continuar</Text>
+
+      {/* Botão Google */}
+      <Pressable 
+        onPress={handleGoogleLogin} 
+        disabled={loading}
+        className="flex-row items-center justify-center py-3 mb-6 bg-white border border-gray-300 rounded-lg active:bg-gray-50"
+      >
+        {loading ? (
+           <ActivityIndicator size="small" color="#000" />
+        ) : (
+          <>
+            <Ionicons name="logo-google" size={20} color="#DB4437" style={{ marginRight: 10 }} />
+            <Text className="font-medium text-gray-700">Entrar com Google</Text>
+          </>
+        )}
+      </Pressable>
+
+      <View className="flex-row items-center mb-6">
+        <View className="flex-1 h-px bg-gray-200" />
+        <Text className="mx-4 text-sm text-gray-400">ou com e-mail</Text>
+        <View className="flex-1 h-px bg-gray-200" />
+      </View>
 
       <Text className="mb-1 font-medium">Email</Text>
       <TextInput

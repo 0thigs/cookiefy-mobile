@@ -2,7 +2,13 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import type { Me } from './auth-client';
-import { fetchMe as apiFetchMe, signIn as apiSignIn, signUp as apiSignUp, signOut as apiSignOut } from './auth-client';
+import { 
+  fetchMe as apiFetchMe, 
+  signIn as apiSignIn, 
+  signUp as apiSignUp, 
+  signOut as apiSignOut,
+  signInWithGoogle as apiSignInWithGoogle 
+} from './auth-client';
 
 SplashScreen.preventAutoHideAsync().catch(() => { });
 
@@ -11,6 +17,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshMe: () => Promise<void>;
 };
@@ -48,6 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace('/');
   }
 
+  async function signInWithGoogle() {
+    await apiSignInWithGoogle();
+    const user = await apiFetchMe();
+    setMe(user);
+    router.replace('/');
+  }
+
   async function signOut() {
     await apiSignOut();
     setMe(null);
@@ -60,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ me, loading, signIn, signUp, signOut, refreshMe }}>
+    <AuthContext.Provider value={{ me, loading, signIn, signUp, signInWithGoogle, signOut, refreshMe }}>
       {children}
     </AuthContext.Provider>
   );

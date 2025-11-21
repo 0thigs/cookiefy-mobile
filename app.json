@@ -2,13 +2,15 @@
   "expo": {
     "name": "cookiefy",
     "slug": "cookiefy",
+    "scheme": "cookiefy",
     "version": "1.0.0",
     "experiments": {
       "tsconfigPaths": true
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "orientation": "portrait",
     "icon": "~/assets/images/icon.png",
