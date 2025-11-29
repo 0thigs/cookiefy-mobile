@@ -1,5 +1,6 @@
-import { API_BASE_URL } from './config';
-import { getAccessToken, setAccessToken, clearSession } from '../hooks/auth-client';
+import { clearSession, getAccessToken, setAccessToken } from '../hooks/auth-client';
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 async function core(path: string, init: RequestInit & { _retry?: boolean } = {}) {
   const token = await getAccessToken();

@@ -1,16 +1,13 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import type { Me } from './auth-client';
-import { 
-  fetchMe as apiFetchMe, 
-  signIn as apiSignIn, 
-  signUp as apiSignUp, 
+import {
+  fetchMe as apiFetchMe,
+  signIn as apiSignIn,
+  signInWithGoogle as apiSignInWithGoogle,
   signOut as apiSignOut,
-  signInWithGoogle as apiSignInWithGoogle 
+  signUp as apiSignUp
 } from './auth-client';
-
-SplashScreen.preventAutoHideAsync().catch(() => { });
 
 type AuthContextType = {
   me: Me;
@@ -30,13 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      let user = null;
       try {
-        const user = await apiFetchMe();
+        user = await apiFetchMe();
         setMe(user);
       } finally {
         setLoading(false);
-        SplashScreen.hideAsync().catch(() => { });
-        if (!me) router.replace('/(auth)/welcome');
+        if (!user) router.replace('/(auth)/welcome');
       }
     })();
   }, []);
@@ -51,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signUp(name: string, email: string, password: string) {
     await apiSignUp(name, email, password);
     const user = await apiFetchMe();
+    console.log('user', user);
     setMe(user);
     router.replace('/');
   }

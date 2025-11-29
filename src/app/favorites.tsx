@@ -1,23 +1,23 @@
-import { useEffect, useState, useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
   Pressable,
+  RefreshControl,
+  ScrollView,
   Text,
   TextInput,
   View,
-  RefreshControl,
-  ScrollView,
-  Modal,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { getFavorites, getRecipeDetail, getFavoritesStats, RecipeBrief } from '../services/recipes';
-import { colors } from '../theme/colors';
-import { RecipeCard } from '../components/RecipeCard';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
+import { RecipeCard } from '../components/RecipeCard';
 import { useNavigation } from '../hooks/useNavigation';
+import { getFavorites, getFavoritesStats, getRecipeDetail, RecipeBrief } from '../services/recipes';
+import { colors } from '../theme/colors';
 
 interface FavoritesFilters {
   q: string;

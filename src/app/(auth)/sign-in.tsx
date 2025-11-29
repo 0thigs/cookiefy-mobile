@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { z } from 'zod';
+import { useAuth } from '../../hooks/useAuth';
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -15,7 +15,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function SignIn() {
   const { signIn, signInWithGoogle } = useAuth();
-  const { register, setValue, handleSubmit, formState } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, setValue, handleSubmit, formState } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { email: 'joao@gmail.com', password: '123456' } });
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -78,7 +78,7 @@ export default function SignIn() {
 
       <Text className="mb-1 font-medium">Email</Text>
       <TextInput
-        className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300"
+        className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300 text-gray-900"
         placeholder="Insira seu email"
         keyboardType="email-address"
         autoCapitalize="none"
@@ -90,7 +90,7 @@ export default function SignIn() {
       <Text className="mb-1 font-medium">Senha</Text>
       <View className={`w-full rounded-lg px-4 flex-row items-center mb-1 ${hasPwdError ? 'border-2 border-danger' : 'border border-gray-300'}`}>
         <TextInput
-          className="flex-1 py-3"
+          className="flex-1 py-3 text-gray-900"
           placeholder="Insira sua senha"
           secureTextEntry={!show}
           onChangeText={(t) => setValue('password', t, { shouldValidate: true })}

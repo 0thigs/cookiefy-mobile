@@ -1,22 +1,22 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
+  RefreshControl,
   Text,
   View,
-  RefreshControl,
-  Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { getRecipeDetail, listPublicRecipes, RecipeBrief } from '../services/recipes';
-import { colors } from '../theme/colors';
-import { RecipeCard } from '../components/RecipeCard';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
+import { RecipeCard } from '../components/RecipeCard';
+import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
+import { getRecipeDetail, listPublicRecipes, RecipeBrief } from '../services/recipes';
+import { colors } from '../theme/colors';
 
 export default function Home() {
   const { me, signOut } = useAuth();
@@ -31,6 +31,7 @@ export default function Home() {
     if (initial) setLoading(true);
     try {
       const res = await listPublicRecipes({ page: 1, pageSize: 10 });
+      console.log(res.data);
       const first = res.data.slice(0, 6);
       const details = await Promise.allSettled(
         first.map((r: RecipeBrief) => getRecipeDetail(r.id))

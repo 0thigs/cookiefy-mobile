@@ -1,5 +1,5 @@
-import { View, Text, Image, Pressable, Linking } from 'react-native';
 import { router } from 'expo-router';
+import { Image, Linking, Pressable, Text, View } from 'react-native';
 
 export default function Welcome() {
   return (

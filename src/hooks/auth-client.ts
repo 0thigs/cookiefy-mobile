@@ -1,9 +1,13 @@
-import * as SecureStore from 'expo-secure-store';
-import { supabase } from '../lib/supabase';
-import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
+import * as SecureStore from 'expo-secure-store';
+import * as WebBrowser from 'expo-web-browser';
+import { supabase } from '../lib/supabase';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3333';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('A variável EXPO_PUBLIC_API_URL não foi definida no .env');
+}
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -46,7 +50,16 @@ export async function signInWithGoogle() {
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
 
   if (result.type === 'success' && result.url) {
-    const params = new URLSearchParams(result.url.split('#')[1]);
+    // Tenta pegar do fragmento (#) ou da query (?)
+    let params = new URLSearchParams(result.url.split('#')[1]);
+    if (!params.get('access_token')) {
+      // Fallback para query params se não achar no fragmento
+      const queryPart = result.url.split('?')[1];
+      if (queryPart) {
+        params = new URLSearchParams(queryPart);
+      }
+    }
+
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
 
@@ -62,7 +75,7 @@ export async function signInWithGoogle() {
     const res = await fetch(`${API_BASE_URL}/auth/exchange/supabase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      credentials: 'include', 
+      credentials: 'include',
       body: JSON.stringify({ token: sessionData.session?.access_token }),
     });
 
@@ -73,6 +86,11 @@ export async function signInWithGoogle() {
     }
 
     const serverData = (await res.json()) as { token: string; expiresIn: string | number };
+    
+    if (!serverData.token) {
+      throw new Error('Token não recebido do servidor');
+    }
+
     await setAccessToken(serverData.token);
 
     await supabase.auth.signOut();
@@ -125,13 +143,18 @@ export async function signOut() {
 
 export async function fetchMe(): Promise<Me> {
   const token = await getAccessToken();
+  
   if (!token) return null;
 
   const meRes = await fetch(`${API_BASE_URL}/users/me`, {
     headers: { Authorization: `Bearer ${token}` },
     credentials: 'include',
   });
-  if (!meRes.ok) return null;
+  
+  if (!meRes.ok) {
+    return null;
+  }
+  
   const me = await meRes.json();
   return { 
     id: me.id, 

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { z } from 'zod';
+import { useAuth } from '../../hooks/useAuth';
 
 const schema = z.object({
   name: z.string().min(2, 'Informe seu nome completo'),
@@ -42,7 +42,7 @@ export default function SignUp() {
 
       <Text className="mb-1 font-medium">Nome completo</Text>
       <TextInput
-        className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300"
+        className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300 text-gray-900"
         placeholder="Insira seu nome completo"
         onChangeText={(t) => setValue('name', t, { shouldValidate: true })}
         {...register('name')}
@@ -51,7 +51,7 @@ export default function SignUp() {
 
       <Text className="mb-1 font-medium">Email</Text>
       <TextInput
-        className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300"
+        className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300 text-gray-900"
         placeholder="Insira seu email"
         autoCapitalize="none"
         keyboardType="email-address"
@@ -63,7 +63,7 @@ export default function SignUp() {
       <Text className="mb-1 font-medium">Senha</Text>
       <View className={`w-full rounded-lg px-4 flex-row items-center mb-1 ${hasPwdError ? 'border-2 border-danger' : 'border border-gray-300'}`}>
         <TextInput
-          className="flex-1 py-3"
+          className="flex-1 py-3 text-gray-900"
           placeholder="Insira sua senha"
           secureTextEntry={!show}
           onChangeText={(t) => setValue('password', t, { shouldValidate: true })}

@@ -1,27 +1,29 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  Image,
+  Linking,
+  Pressable,
   ScrollView,
+  Share,
   Text,
   View,
-  Pressable,
-  Image,
-  Share,
-  Linking,
-  Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { getRecipeDetail, addFavorite, removeFavorite, type RecipeDetail } from '../../services/recipes';
+import { addFavorite, getRecipeDetail, removeFavorite, type RecipeDetail } from '../../services/recipes';
+import { addItemToList, addRecipeToList } from '../../services/shopping-list';
 import { getUserById, type User } from '../../services/users';
-import { addRecipeToList, addItemToList } from '../../services/shopping-list';
-import { API_BASE_URL } from '../../lib/config';
-import { colors } from '../../theme/colors';
-import { useAuth } from '../../hooks/useAuth';
-import { useNavigation } from '../../hooks/useNavigation';
+// import { API_BASE_URL } from '../../lib/config';
 import { BottomNavBar } from '../../components/BottomNavBar';
 import { ReviewsTab } from '../../components/reviews/ReviewsTab';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigation } from '../../hooks/useNavigation';
+import { colors } from '../../theme/colors';
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -121,6 +123,10 @@ export default function RecipeDetailScreen() {
 
   async function handleDownloadPdf() {
     if (!recipe?.id) return;
+    if (!API_BASE_URL) {
+      Alert.alert('Erro', 'Configuração de API inválida');
+      return;
+    }
     try {
       const url = `${API_BASE_URL}/recipes/${recipe.id}/pdf`;
       // abrir no navegador/handler do SO para permitir download
