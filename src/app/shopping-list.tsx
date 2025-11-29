@@ -1,30 +1,31 @@
-import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  getShoppingList,
-  toggleItemChecked,
-  deleteItem,
-  clearCheckedItems,
-  addItemToList,
-  updateItem,
-  type ShoppingListItem,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View
+} from 'react-native';
+import { BottomNavBar } from '../components/BottomNavBar';
+import { useNavigation } from '../hooks/useNavigation';
+import {
+    addItemToList,
+    clearCheckedItems,
+    deleteItem,
+    getShoppingList,
+    toggleItemChecked,
+    updateItem,
+    type ShoppingListItem,
 } from '../services/shopping-list';
 import { colors } from '../theme/colors';
-import { useNavigation } from '../hooks/useNavigation';
-import { BottomNavBar } from '../components/BottomNavBar';
 
 export default function ShoppingListScreen() {
   const { handleTabPress } = useNavigation();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('shoppingList');
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<ShoppingListItem[]>([]);
@@ -46,7 +47,7 @@ export default function ShoppingListScreen() {
       const data = await getShoppingList();
       setItems(data.items || []);
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível carregar a lista de compras');
+      Alert.alert(t('common.error'), t('common.unknown'));
     } finally {
       setLoading(false);
     }
@@ -61,25 +62,25 @@ export default function ShoppingListScreen() {
         )
       );
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível atualizar o item');
+      Alert.alert(t('common.error'), t('common.unknown'));
     }
   }
 
   async function handleDelete(itemId: string) {
     Alert.alert(
-      'Confirmar',
-      'Deseja remover este item da lista?',
+      t('common.confirm'),
+      t('common.confirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remover',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteItem(itemId);
               setItems((prev) => prev.filter((item) => item.id !== itemId));
             } catch (error: any) {
-              Alert.alert('Erro', 'Não foi possível remover o item');
+              Alert.alert(t('common.error'), t('common.unknown'));
             }
           },
         },
@@ -90,24 +91,24 @@ export default function ShoppingListScreen() {
   async function handleClearChecked() {
     const checkedCount = items.filter((i) => i.isChecked).length;
     if (checkedCount === 0) {
-      Alert.alert('Aviso', 'Não há itens marcados para limpar');
+      Alert.alert(t('common.error'), t('shoppingList.empty'));
       return;
     }
 
     Alert.alert(
-      'Confirmar',
-      `Deseja remover ${checkedCount} ${checkedCount === 1 ? 'item marcado' : 'itens marcados'}?`,
+      t('common.confirm'),
+      t('shoppingList.clearConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Limpar',
+          text: t('common.clear'),
           style: 'destructive',
           onPress: async () => {
             try {
               await clearCheckedItems();
               setItems((prev) => prev.filter((item) => !item.isChecked));
             } catch (error: any) {
-              Alert.alert('Erro', 'Não foi possível limpar os itens');
+              Alert.alert(t('common.error'), t('common.unknown'));
             }
           },
         },
@@ -138,38 +139,38 @@ export default function ShoppingListScreen() {
     const trimmedUnit = unit.trim();
 
     if (!trimmedNote) {
-      Alert.alert('Validação', 'O nome do item é obrigatório');
+      Alert.alert(t('common.error'), t('common.required'));
       return;
     }
 
     if (!trimmedUnit) {
-      Alert.alert('Validação', 'A unidade é obrigatória');
+      Alert.alert(t('common.error'), t('common.required'));
       return;
     }
 
     if (trimmedUnit.length > 10) {
-      Alert.alert('Validação', 'A unidade é muito longa (máx. 10 caracteres)');
+      Alert.alert(t('common.error'), t('common.error'));
       return;
     }
 
   const allowedPattern = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s\-\/,.]+$/;
     if (!allowedPattern.test(trimmedNote)) {
-      Alert.alert('Validação', 'O nome do item contém caracteres inválidos');
+      Alert.alert(t('common.error'), t('common.error'));
       return;
     }
 
     if (!allowedPattern.test(trimmedUnit)) {
-      Alert.alert('Validação', 'A unidade contém caracteres inválidos');
+      Alert.alert(t('common.error'), t('common.error'));
       return;
     }
 
     if (!/^[0-9]+$/.test(amount)) {
-      Alert.alert('Validação', 'Quantidade deve conter apenas números inteiros');
+      Alert.alert(t('common.error'), t('common.error'));
       return;
     }
     const numAmount = parseInt(amount, 10);
     if (Number.isNaN(numAmount) || numAmount <= 0) {
-      Alert.alert('Validação', 'Quantidade deve ser um inteiro maior que zero');
+      Alert.alert(t('common.error'), t('common.error'));
       return;
     }
 
@@ -198,7 +199,7 @@ export default function ShoppingListScreen() {
       }
       setShowAddModal(false);
     } catch (error: any) {
-      Alert.alert('Erro', error?.message || 'Não foi possível salvar o item');
+      Alert.alert(t('common.error'), error?.message || t('common.unknown'));
     } finally {
       setSaving(false);
     }
@@ -212,7 +213,7 @@ export default function ShoppingListScreen() {
       <View className="flex-1 bg-white">
         <View className="items-center justify-center flex-1">
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text className="mt-4 text-gray-600">Carregando lista...</Text>
+          <Text className="mt-4 text-gray-600">{t('common.loading')}</Text>
         </View>
       </View>
     );
@@ -223,9 +224,9 @@ export default function ShoppingListScreen() {
       <View className="px-6 pt-12 pb-6 bg-primary">
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold text-white">Lista de Compras</Text>
+            <Text className="text-2xl font-bold text-white">{t('shoppingList.title')}</Text>
             <Text className="mt-1 text-white/80">
-              {uncheckedItems.length} {uncheckedItems.length === 1 ? 'item' : 'itens'}
+              {uncheckedItems.length} {uncheckedItems.length === 1 ? t('shoppingList.item') : t('shoppingList.items')}
             </Text>
           </View>
           <Pressable
@@ -244,10 +245,10 @@ export default function ShoppingListScreen() {
           <View className="items-center justify-center py-16">
             <Ionicons name="cart-outline" size={64} color={colors.muted} />
             <Text className="mt-4 text-lg font-semibold text-gray-900">
-              Lista vazia
+              {t('shoppingList.empty')}
             </Text>
             <Text className="mt-2 text-center text-gray-600">
-              Adicione itens manualmente ou adicione ingredientes de uma receita
+              {t('shoppingList.emptyDesc')}
             </Text>
           </View>
         ) : (
@@ -268,7 +269,7 @@ export default function ShoppingListScreen() {
               <>
                 <View className="flex-row items-center my-4">
                   <View className="flex-1 h-px bg-gray-300" />
-                  <Text className="px-3 text-sm text-gray-500">Comprados</Text>
+                  <Text className="px-3 text-sm text-gray-500">{t('shoppingList.bought')}</Text>
                   <View className="flex-1 h-px bg-gray-300" />
                 </View>
                 {checkedItems.map((item) => (
@@ -311,21 +312,21 @@ export default function ShoppingListScreen() {
           />
           <View className="p-6 bg-white rounded-t-3xl">
             <Text className="mb-4 text-xl font-bold text-gray-900">
-              {editingItem ? 'Editar Item' : 'Adicionar Item'}
+              {editingItem ? t('common.edit') : t('common.add')}
             </Text>
 
-            <Text className="mb-2 text-sm font-medium text-gray-700">Item</Text>
+            <Text className="mb-2 text-sm font-medium text-gray-700">{t('shoppingList.itemLabel')}</Text>
             <TextInput
               value={note}
               onChangeText={setNote}
-              placeholder="Ex: Tomate"
+              placeholder={t('shoppingList.itemPlaceholder')}
               className="px-4 py-3 mb-4 border border-gray-300 rounded-lg"
             />
 
             <View className="flex-row mb-4 space-x-4">
               <View className="flex-1">
                 <Text className="mb-2 text-sm font-medium text-gray-700">
-                  Quantidade
+                  {t('shoppingList.quantity')}
                 </Text>
                 <TextInput
                   value={amount}
@@ -339,7 +340,7 @@ export default function ShoppingListScreen() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="mb-2 text-sm font-medium text-gray-700">Unidade</Text>
+                <Text className="mb-2 text-sm font-medium text-gray-700">{t('shoppingList.unit')}</Text>
                 <TextInput
                   value={unit}
                   onChangeText={setUnit}
@@ -355,7 +356,7 @@ export default function ShoppingListScreen() {
                 className="flex-1 py-3 border border-gray-300 rounded-lg"
               >
                 <Text className="font-semibold text-center text-gray-700">
-                  Cancelar
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -363,7 +364,7 @@ export default function ShoppingListScreen() {
                 className="flex-1 py-3 rounded-lg bg-primary"
               >
                 <Text className="font-semibold text-center text-white">
-                  {editingItem ? 'Salvar' : 'Adicionar'}
+                  {editingItem ? t('common.save') : t('common.add')}
                 </Text>
               </Pressable>
             </View>
@@ -387,8 +388,9 @@ function ItemRow({
   onDelete: (id: string) => void;
   onEdit: (item: ShoppingListItem) => void;
 }) {
+  const { t } = useTranslation();
   const displayName =
-    item.ingredient?.name || item.note || 'Item sem nome';
+    item.ingredient?.name || item.note || t('shoppingList.unnamedItem');
   const displayAmount = `${item.amount} ${item.unit}`;
 
   return (
@@ -412,7 +414,7 @@ function ItemRow({
         <Text className="text-sm text-gray-500">{displayAmount}</Text>
         {item.recipe && (
           <Text className="text-xs text-gray-400">
-            De: {item.recipe.title}
+            {t('shoppingList.from')}: {item.recipe.title}
           </Text>
         )}
       </Pressable>

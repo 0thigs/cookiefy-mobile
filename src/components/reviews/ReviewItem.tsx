@@ -1,8 +1,9 @@
-import { View, Text, Image, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { StarRating } from './StarRating';
-import { colors } from '../../theme/colors';
+import { useTranslation } from 'react-i18next';
+import { Alert, Image, Pressable, Text, View } from 'react-native';
 import type { Review } from '../../services/reviews';
+import { colors } from '../../theme/colors';
+import { StarRating } from './StarRating';
 
 interface ReviewItemProps {
   review: Review;
@@ -12,16 +13,17 @@ interface ReviewItemProps {
 }
 
 export function ReviewItem({ review, currentUserId, onEdit, onDelete }: ReviewItemProps) {
+  const { t } = useTranslation();
   const isMyReview = currentUserId === review.userId;
 
   function handleDelete() {
     Alert.alert(
-      'Excluir avaliação',
-      'Tem certeza que deseja excluir sua avaliação?',
+      t('reviews.deleteTitle'),
+      t('reviews.deleteConfirm'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Excluir',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => onDelete?.(review.id),
         },
@@ -34,10 +36,10 @@ export function ReviewItem({ review, currentUserId, onEdit, onDelete }: ReviewIt
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'Agora mesmo';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}min atrás`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h atrás`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d atrás`;
+    if (diffInSeconds < 60) return t('time.justNow');
+    if (diffInSeconds < 3600) return t('time.minutesAgo', { count: Math.floor(diffInSeconds / 60) });
+    if (diffInSeconds < 86400) return t('time.hoursAgo', { count: Math.floor(diffInSeconds / 3600) });
+    if (diffInSeconds < 604800) return t('time.daysAgo', { count: Math.floor(diffInSeconds / 86400) });
 
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -64,7 +66,7 @@ export function ReviewItem({ review, currentUserId, onEdit, onDelete }: ReviewIt
           </View>
           <View className="flex-1">
             <Text className="font-semibold text-gray-900">
-              {review.user?.name || 'Usuário'}
+              {review.user?.name || t('common.user')}
             </Text>
             <Text className="text-xs text-gray-500">{formatDate(review.createdAt)}</Text>
           </View>

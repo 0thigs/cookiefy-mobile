@@ -1,27 +1,28 @@
-import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  Alert,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { StarRating } from './StarRating';
-import { ReviewItem } from './ReviewItem';
-import { ReviewFormModal } from './ReviewFormModal';
-import { colors } from '../../theme/colors';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  listReviews,
-  getReviewAverage,
-  getMyReview,
-  createReview,
-  updateReview,
-  deleteReview,
-  type Review,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Pressable,
+    RefreshControl,
+    Text,
+    View,
+} from 'react-native';
+import {
+    createReview,
+    deleteReview,
+    getMyReview,
+    getReviewAverage,
+    listReviews,
+    updateReview,
+    type Review,
 } from '../../services/reviews';
+import { colors } from '../../theme/colors';
+import { ReviewFormModal } from './ReviewFormModal';
+import { ReviewItem } from './ReviewItem';
+import { StarRating } from './StarRating';
 
 interface ReviewsTabProps {
   recipeId: string;
@@ -29,6 +30,7 @@ interface ReviewsTabProps {
 }
 
 export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [myReview, setMyReview] = useState<Review | null>(null);
   const [averageRating, setAverageRating] = useState(0);
@@ -55,7 +57,7 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
       ]);
     } catch (error: any) {
       console.error('Erro ao carregar avaliações:', error);
-      Alert.alert('Erro', 'Não foi possível carregar as avaliações');
+      Alert.alert(t('common.error'), t('reviews.loadError'));
     } finally {
       setLoading(false);
     }
@@ -155,9 +157,9 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
       setMyReview(null);
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
       await loadAverage();
-      Alert.alert('Sucesso', 'Avaliação excluída com sucesso');
+      Alert.alert(t('common.success'), t('reviews.deleteSuccess'));
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível excluir a avaliação');
+      Alert.alert(t('common.error'), t('reviews.deleteError'));
     }
   }
 
@@ -165,7 +167,7 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
     return (
       <View className="items-center justify-center flex-1 py-12">
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="mt-4 text-gray-600">Carregando avaliações...</Text>
+        <Text className="mt-4 text-gray-600">{t('reviews.loading')}</Text>
       </View>
     );
   }
@@ -196,7 +198,7 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
                     <View>
                       <StarRating rating={Math.round(averageRating)} readonly size={20} />
                       <Text className="mt-1 text-xs text-gray-600">
-                        {totalReviews} {totalReviews === 1 ? 'avaliação' : 'avaliações'}
+                        {totalReviews} {totalReviews === 1 ? t('reviews.review') : t('reviews.reviews')}
                       </Text>
                     </View>
                   </View>
@@ -214,7 +216,7 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
                       color="white"
                     />
                     <Text className="ml-2 font-semibold text-white">
-                      {myReview ? 'Editar' : 'Avaliar'}
+                      {myReview ? t('common.edit') : t('reviews.rate')}
                     </Text>
                   </Pressable>
                 )}
@@ -224,7 +226,7 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
             {/* Reviews list header */}
             {reviews.length > 0 && (
               <Text className="px-6 mb-3 text-lg font-semibold text-gray-900">
-                Avaliações ({totalReviews})
+                {t('reviews.title', { count: totalReviews })}
               </Text>
             )}
           </View>
@@ -233,17 +235,17 @@ export function ReviewsTab({ recipeId, currentUserId }: ReviewsTabProps) {
           <View className="items-center justify-center px-6 py-12">
             <Ionicons name="chatbubbles-outline" size={64} color={colors.muted} />
             <Text className="mt-4 text-lg font-semibold text-gray-900">
-              Nenhuma avaliação ainda
+              {t('reviews.emptyTitle')}
             </Text>
             <Text className="mt-2 text-center text-gray-600">
-              Seja o primeiro a avaliar esta receita!
+              {t('reviews.emptyDesc')}
             </Text>
             {currentUserId && (
               <Pressable
                 onPress={() => handleOpenModal()}
                 className="px-6 py-3 mt-6 rounded-lg bg-primary"
               >
-                <Text className="font-semibold text-white">Avaliar Receita</Text>
+                <Text className="font-semibold text-white">{t('reviews.rateRecipe')}</Text>
               </Pressable>
             )}
           </View>

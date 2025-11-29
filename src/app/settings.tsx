@@ -1,14 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, ScrollView, FlatList, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '../hooks/useNavigation';
-import { BottomNavBar } from '../components/BottomNavBar';
-import { colors } from '../theme/colors';
-import { listDraftRecipes, getDraftDetail, publishRecipe, listMyRecipes, deleteRecipe, type RecipeBrief, type RecipeDetail } from '../services/recipes';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { BottomNavBar } from '../components/BottomNavBar';
+import { useNavigation } from '../hooks/useNavigation';
+import i18n from '../i18n';
+import { deleteRecipe, getDraftDetail, listDraftRecipes, listMyRecipes, publishRecipe, type RecipeBrief, type RecipeDetail } from '../services/recipes';
+import { colors } from '../theme/colors';
 
 export default function SettingsScreen() {
   const { handleTabPress } = useNavigation();
+  const { t } = useTranslation();
   const [activeTab] = useState('profile');
 
   const [openDrafts, setOpenDrafts] = useState(false);
@@ -24,6 +28,14 @@ export default function SettingsScreen() {
   const [hasMorePub, setHasMorePub] = useState(true);
   const [selected, setSelected] = useState<RecipeDetail | null>(null);
   const [selectedKind, setSelectedKind] = useState<'draft'|'published'|null>(null);
+  const [openLanguageModal, setOpenLanguageModal] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'pt-BR');
+
+  useEffect(()=>{
+    AsyncStorage.getItem('language').then((lang) => {
+      if (lang) setCurrentLanguage(lang);
+    }).catch(() => {});
+  }, []);
 
   async function loadDrafts(reset = false) {
     if (loadingList) return;
@@ -39,7 +51,7 @@ export default function SettingsScreen() {
         setDrafts((prev) => [...prev, ...res.data]);
       }
     } catch (e: any) {
-      Alert.alert('Erro', e?.message ?? 'Não foi possível listar rascunhos');
+      Alert.alert(t('common.error'), e?.message ?? t('common.unknown'));
     } finally {
       setLoadingList(false);
     }
@@ -52,7 +64,7 @@ export default function SettingsScreen() {
       setSelected(detail);
       setSelectedKind('draft');
     } catch (e: any) {
-      Alert.alert('Erro', e?.message ?? 'Não foi possível carregar o rascunho');
+      Alert.alert(t('common.error'), e?.message ?? t('common.unknown'));
     } finally {
       setLoadingDetail(false);
     }
@@ -73,7 +85,7 @@ export default function SettingsScreen() {
         setPublished((prev) => [...prev, ...pubs]);
       }
     } catch (e: any) {
-      Alert.alert('Erro', e?.message ?? 'Não foi possível listar receitas');
+      Alert.alert(t('common.error'), e?.message ?? t('common.unknown'));
     } finally {
       setLoadingList(false);
     }
@@ -86,26 +98,26 @@ export default function SettingsScreen() {
   const handlePublish = async (id: string) => {
     try {
       await publishRecipe(id);
-      Alert.alert('Publicado', 'Receita publicada com sucesso');
+      Alert.alert(t('common.success'), t('newRecipe.success'));
       setSelected(null);
       setDrafts((prev) => prev.filter((d) => d.id !== id));
     } catch (e: any) {
-      Alert.alert('Erro', e?.message ?? 'Não foi possível publicar');
+      Alert.alert(t('common.error'), e?.message ?? t('common.unknown'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    Alert.alert('Excluir', 'Tem certeza que deseja excluir esta receita?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: async () => {
+    Alert.alert(t('common.delete'), t('common.confirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => {
         try {
           await deleteRecipe(id);
           setSelected(null);
           setDrafts((prev)=> prev.filter(r=> r.id !== id));
           setPublished((prev)=> prev.filter(r=> r.id !== id));
-          Alert.alert('Excluída', 'Receita removida');
+          Alert.alert(t('common.success'), t('common.success'));
         } catch (e:any) {
-          Alert.alert('Erro', e?.message ?? 'Não foi possível excluir');
+          Alert.alert(t('common.error'), e?.message ?? t('common.unknown'));
         }
       }}
     ]);
@@ -118,7 +130,7 @@ export default function SettingsScreen() {
           <Pressable onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.primary} />
           </Pressable>
-          <Text className="text-lg font-semibold text-gray-900">Configurações</Text>
+          <Text className="text-lg font-semibold text-gray-900">{t('settings.title')}</Text>
         </View>
       </View>
 
@@ -131,7 +143,7 @@ export default function SettingsScreen() {
             <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-gray-100">
               <Ionicons name="document-text-outline" size={20} color={colors.primary} />
             </View>
-            <Text className="flex-1 text-base font-medium text-gray-800">Rascunhos</Text>
+            <Text className="flex-1 text-base font-medium text-gray-800">{t('settings.drafts')}</Text>
             <View style={{ transform: [{ rotate: openDrafts ? '90deg' : '0deg' }] }}>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </View>
@@ -144,7 +156,7 @@ export default function SettingsScreen() {
                   <ActivityIndicator color={colors.primary} />
                 </View>
               ) : drafts.length === 0 ? (
-                <Text className="text-gray-600">Nenhum rascunho encontrado.</Text>
+                <Text className="text-gray-600">{t('common.empty')}</Text>
               ) : (
                 <View>
                   {drafts.map((d) => (
@@ -157,7 +169,7 @@ export default function SettingsScreen() {
                   {hasMore && (
                     <Pressable className="items-center py-2 mt-2 rounded-lg border border-gray-200"
                       onPress={() => { setPage((p)=>p+1); loadDrafts(false); }}>
-                      <Text className="text-gray-700">Carregar mais</Text>
+                      <Text className="text-gray-700">{t('common.next')}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -177,7 +189,7 @@ export default function SettingsScreen() {
             <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-gray-100">
               <Ionicons name="document-outline" size={20} color={colors.primary} />
             </View>
-            <Text className="flex-1 text-base font-medium text-gray-800">Receitas Publicadas</Text>
+            <Text className="flex-1 text-base font-medium text-gray-800">{t('settings.published')}</Text>
             <View style={{ transform: [{ rotate: openPublished ? '90deg' : '0deg' }] }}>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </View>
@@ -190,7 +202,7 @@ export default function SettingsScreen() {
                   <ActivityIndicator color={colors.primary} />
                 </View>
               ) : published.length === 0 ? (
-                <Text className="text-gray-600">Nenhuma receita publicada encontrada.</Text>
+                <Text className="text-gray-600">{t('common.empty')}</Text>
               ) : (
                 <View>
                   {published.map((d) => (
@@ -202,7 +214,7 @@ export default function SettingsScreen() {
                           setSelected(detail);
                           setSelectedKind('published');
                         } catch (e:any) {
-                          Alert.alert('Erro', e?.message ?? 'Não foi possível carregar');
+                          Alert.alert(t('common.error'), e?.message ?? t('common.unknown'));
                         } finally { setLoadingDetail(false); }
                       }}>
                       <Text className="text-base text-gray-800">{d.title}</Text>
@@ -212,7 +224,7 @@ export default function SettingsScreen() {
                   {hasMorePub && (
                     <Pressable className="items-center py-2 mt-2 rounded-lg border border-gray-200"
                       onPress={() => { setPagePub((p)=>p+1); loadPublished(false); }}>
-                      <Text className="text-gray-700">Carregar mais</Text>
+                      <Text className="text-gray-700">{t('common.next')}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -221,6 +233,49 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        <View className="mb-4 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <Pressable
+            className="flex-row items-center border-b border-gray-50 px-4 py-4 active:bg-gray-50"
+            onPress={() => setOpenLanguageModal(true)}
+          >
+            <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+              <Ionicons name="language" size={20} color={colors.primary} />
+            </View>
+            <Text className="flex-1 text-base font-medium text-gray-800">{t('settings.language')}</Text>
+            <Text className="text-sm text-gray-500">{currentLanguage === 'pt-BR' ? t('settings.languages.ptBR') : t('settings.languages.enUS')}</Text>
+            <View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </View>
+          </Pressable>
+        </View>
+
+        <Modal transparent visible={openLanguageModal} animationType="fade">
+          <View className="flex-1 items-center justify-center bg-black/40">
+            <View className="w-11/12 rounded-xl bg-white p-4">
+              <Text className="mb-3 text-lg font-semibold text-gray-900">{t('settings.language')}</Text>
+              <Pressable className="py-3" onPress={async () => {
+                await AsyncStorage.setItem('language', 'pt-BR');
+                i18n.changeLanguage('pt-BR');
+                setCurrentLanguage('pt-BR');
+                setOpenLanguageModal(false);
+              }}>
+                <Text className="text-base text-gray-800">{t('settings.languages.ptBR')}</Text>
+              </Pressable>
+              <Pressable className="py-3" onPress={async () => {
+                await AsyncStorage.setItem('language', 'en-US');
+                i18n.changeLanguage('en-US');
+                setCurrentLanguage('en-US');
+                setOpenLanguageModal(false);
+              }}>
+                <Text className="text-base text-gray-800">{t('settings.languages.enUS')}</Text>
+              </Pressable>
+              <Pressable className="items-center mt-4 rounded-lg bg-gray-100 py-3" onPress={() => setOpenLanguageModal(false)}>
+                <Text className="text-gray-800">{t('common.cancel')}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
         {selected && (
           <View className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
             <Text className="mb-1 text-lg font-semibold text-gray-900">{selected.title}</Text>
@@ -228,25 +283,25 @@ export default function SettingsScreen() {
               <Text className="mb-2 text-gray-700">{selected.description}</Text>
             )}
             <View className="mb-2">
-              <Text className="text-sm text-gray-600">Dificuldade: {selected.difficulty ?? '-'}</Text>
-              <Text className="text-sm text-gray-600">Preparo: {selected.prepMinutes ?? '-'} min</Text>
-              <Text className="text-sm text-gray-600">Cozimento: {selected.cookMinutes ?? '-'} min</Text>
-              <Text className="text-sm text-gray-600">Porções: {selected.servings ?? '-'}</Text>
+              <Text className="text-sm text-gray-600">{t('recipe.difficulty.label')}: {selected.difficulty ? t(`recipe.difficultyLevels.${selected.difficulty}`) : '-'}</Text>
+              <Text className="text-sm text-gray-600">{t('recipe.prepTime')}: {selected.prepMinutes ?? '-'} min</Text>
+              <Text className="text-sm text-gray-600">{t('recipe.cookTime')}: {selected.cookMinutes ?? '-'} min</Text>
+              <Text className="text-sm text-gray-600">{t('recipe.servings')}: {selected.servings ?? '-'}</Text>
             </View>
             {selected.nutrition && (
               <View className="mb-2">
-                <Text className="text-sm text-gray-600">Calorias: {selected.nutrition.calories ?? '-'}</Text>
-                <Text className="text-sm text-gray-600">Proteína: {selected.nutrition.protein ?? '-'}</Text>
-                <Text className="text-sm text-gray-600">Carboidratos: {selected.nutrition.carbs ?? '-'}</Text>
-                <Text className="text-sm text-gray-600">Gorduras: {selected.nutrition.fat ?? '-'}</Text>
+                <Text className="text-sm text-gray-600">{t('recipe.calories')}: {selected.nutrition.calories ?? '-'}</Text>
+                <Text className="text-sm text-gray-600">{t('recipe.protein')}: {selected.nutrition.protein ?? '-'}</Text>
+                <Text className="text-sm text-gray-600">{t('recipe.carbs')}: {selected.nutrition.carbs ?? '-'}</Text>
+                <Text className="text-sm text-gray-600">{t('recipe.fat')}: {selected.nutrition.fat ?? '-'}</Text>
               </View>
             )}
             {!!selected.categories?.length && (
-              <Text className="text-sm text-gray-600 mb-2">Categorias: {selected.categories.map(c=>c.name).join(', ')}</Text>
+              <Text className="text-sm text-gray-600 mb-2">{t('home.categories')}: {selected.categories.map(c=>c.name).join(', ')}</Text>
             )}
             {!!selected.ingredients?.length && (
               <View className="mb-2">
-                <Text className="text-sm font-medium text-gray-800">Ingredientes</Text>
+                <Text className="text-sm font-medium text-gray-800">{t('recipe.ingredients')}</Text>
                 {selected.ingredients!.map((i, idx) => (
                   <Text key={idx} className="text-sm text-gray-600">• {i.name}{i.amount ? ` - ${i.amount}${i.unit ? ' ' + i.unit : ''}`: ''}</Text>
                 ))}
@@ -254,7 +309,7 @@ export default function SettingsScreen() {
             )}
             {!!selected.steps?.length && (
               <View className="mb-3">
-                <Text className="text-sm font-medium text-gray-800">Passos</Text>
+                <Text className="text-sm font-medium text-gray-800">{t('recipe.steps')}</Text>
                 {selected.steps!.map((s) => (
                   <Text key={s.order} className="text-sm text-gray-600">{s.order + 1}. {s.text}</Text>
                 ))}
@@ -266,21 +321,21 @@ export default function SettingsScreen() {
                 className="flex-1 items-center rounded-lg border border-gray-300 py-3"
                 onPress={() => router.push({ pathname: '/recipes/new', params: selectedKind==='draft' ? { draftId: selected!.id } : { recipeId: selected!.id } })}
               >
-                <Text className="text-gray-800">Editar</Text>
+                <Text className="text-gray-800">{t('common.edit')}</Text>
               </Pressable>
               {selectedKind==='draft' ? (
                 <Pressable
                   className="flex-1 items-center rounded-lg bg-primary py-3"
                   onPress={() => handlePublish(selected!.id)}
                 >
-                  <Text className="font-semibold text-white">Publicar</Text>
+                  <Text className="font-semibold text-white">{t('newRecipe.publishNow')}</Text>
                 </Pressable>
               ) : null}
               <Pressable
                 className="flex-1 items-center rounded-lg bg-red-500 py-3"
                 onPress={() => handleDelete(selected!.id)}
               >
-                <Text className="font-semibold text-white">Excluir</Text>
+                <Text className="font-semibold text-white">{t('common.delete')}</Text>
               </Pressable>
             </View>
           </View>
@@ -291,3 +346,4 @@ export default function SettingsScreen() {
     </View>
   );
 }
+

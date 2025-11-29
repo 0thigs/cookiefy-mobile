@@ -1,6 +1,7 @@
 import { makeRedirectUri } from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
+import i18n from '../i18n';
 import { supabase } from '../lib/supabase';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -13,6 +14,17 @@ WebBrowser.maybeCompleteAuthSession();
 
 const ACCESS_TOKEN_KEY = 'cookiefy_access_token';
 let inMemoryToken: string | null = null;
+
+type SessionExpiredListener = () => void;
+const sessionExpiredListeners: SessionExpiredListener[] = [];
+
+export function onSessionExpired(listener: SessionExpiredListener) {
+  sessionExpiredListeners.push(listener);
+  return () => {
+    const idx = sessionExpiredListeners.indexOf(listener);
+    if (idx >= 0) sessionExpiredListeners.splice(idx, 1);
+  };
+}
 
 export async function getAccessToken() {
   if (inMemoryToken !== null) return inMemoryToken;
@@ -27,6 +39,7 @@ export async function setAccessToken(token: string) {
 export async function clearSession() {
   inMemoryToken = null;
   await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+  sessionExpiredListeners.forEach((l) => l());
 }
 
 export async function signInWithGoogle() {
@@ -45,7 +58,7 @@ export async function signInWithGoogle() {
   });
 
   if (error) throw new Error(error.message);
-  if (!data?.url) throw new Error('Falha ao iniciar autenticação OAuth');
+  if (!data?.url) throw new Error(i18n.t('auth.oauthStartError'));
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
 
@@ -63,7 +76,7 @@ export async function signInWithGoogle() {
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
 
-    if (!accessToken) throw new Error('Token não encontrado na resposta');
+    if (!accessToken) throw new Error(i18n.t('auth.tokenNotFound'));
 
     const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
       access_token: accessToken,
@@ -82,20 +95,20 @@ export async function signInWithGoogle() {
     if (!res.ok) {
       await supabase.auth.signOut();
       const msg = await res.json().catch(() => ({}));
-      throw new Error(msg?.message ?? 'Falha na troca de token com o servidor');
+      throw new Error(msg?.message ?? i18n.t('auth.tokenExchangeError'));
     }
 
     const serverData = (await res.json()) as { token: string; expiresIn: string | number };
     
     if (!serverData.token) {
-      throw new Error('Token não recebido do servidor');
+      throw new Error(i18n.t('auth.serverTokenMissing'));
     }
 
     await setAccessToken(serverData.token);
 
     await supabase.auth.signOut();
   } else {
-    throw new Error('Login cancelado pelo usuário');
+    throw new Error(i18n.t('auth.loginCancelled'));
   }
 }
 
@@ -116,7 +129,7 @@ export async function signIn(email: string, password: string) {
   });
   if (!res.ok) {
     const msg = await res.json().catch(() => ({}));
-    throw new Error(msg?.message ?? 'Credenciais inválidas');
+    throw new Error(msg?.message ?? i18n.t('auth.invalidCredentials'));
   }
   const data = (await res.json()) as { token: string; expiresIn: string | number };
   await setAccessToken(data.token);
@@ -131,7 +144,7 @@ export async function signUp(name: string, email: string, password: string) {
   });
   if (!res.ok) {
     const msg = await res.json().catch(() => ({}));
-    throw new Error(msg?.message ?? 'Falha no registro');
+    throw new Error(msg?.message ?? i18n.t('auth.registerError'));
   }
   await signIn(email, password);
 }

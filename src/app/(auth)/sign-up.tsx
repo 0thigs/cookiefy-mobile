@@ -1,21 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 import { useAuth } from '../../hooks/useAuth';
 
-const schema = z.object({
-  name: z.string().min(2, 'Informe seu nome completo'),
-  email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Sua senha deve conter pelo menos 6 caracteres'),
-});
-type FormData = z.infer<typeof schema>;
-
 export default function SignUp() {
+  const { t } = useTranslation();
   const { signUp } = useAuth();
+
+  const schema = useMemo(() => z.object({
+    name: z.string().min(2, t('auth.invalidName')),
+    email: z.string().email(t('auth.invalidEmail')),
+    password: z.string().min(6, t('auth.passwordMinLength')),
+  }), [t]);
+
+  type FormData = z.infer<typeof schema>;
+
   const { register, setValue, handleSubmit, formState } = useForm<FormData>({ resolver: zodResolver(schema) });
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
@@ -27,7 +31,7 @@ export default function SignUp() {
     try {
       await signUp(name.trim(), email.trim(), password);
     } catch (e: any) {
-      setServerError(e?.message ?? 'Falha no registro');
+      setServerError(e?.message ?? t('auth.registerError'));
     } finally {
       setLoading(false);
     }
@@ -37,22 +41,22 @@ export default function SignUp() {
 
   return (
     <View className="flex-1 px-6 pt-8 bg-white">
-      <Text className="mb-2 text-3xl font-bold text-center">Crie sua conta</Text>
-      <Text className="mb-8 text-center text-gray-500">Junte-se à nossa comunidade de cozinheiros</Text>
+      <Text className="mb-2 text-3xl font-bold text-center">{t('auth.createAccountTitle')}</Text>
+      <Text className="mb-8 text-center text-gray-500">{t('auth.joinCommunity')}</Text>
 
-      <Text className="mb-1 font-medium">Nome completo</Text>
+      <Text className="mb-1 font-medium">{t('auth.fullName')}</Text>
       <TextInput
         className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300 text-gray-900"
-        placeholder="Insira seu nome completo"
+        placeholder={t('auth.fullNamePlaceholder')}
         onChangeText={(t) => setValue('name', t, { shouldValidate: true })}
         {...register('name')}
       />
       {formState.errors.name && <Text className="mb-3 text-danger">{formState.errors.name.message}</Text>}
 
-      <Text className="mb-1 font-medium">Email</Text>
+      <Text className="mb-1 font-medium">{t('auth.email')}</Text>
       <TextInput
         className="px-4 py-3 mb-1 w-full rounded-lg border border-gray-300 text-gray-900"
-        placeholder="Insira seu email"
+        placeholder={t('auth.emailPlaceholder')}
         autoCapitalize="none"
         keyboardType="email-address"
         onChangeText={(t) => setValue('email', t, { shouldValidate: true })}
@@ -60,11 +64,11 @@ export default function SignUp() {
       />
       {formState.errors.email && <Text className="mb-3 text-danger">{formState.errors.email.message}</Text>}
 
-      <Text className="mb-1 font-medium">Senha</Text>
+      <Text className="mb-1 font-medium">{t('auth.password')}</Text>
       <View className={`w-full rounded-lg px-4 flex-row items-center mb-1 ${hasPwdError ? 'border-2 border-danger' : 'border border-gray-300'}`}>
         <TextInput
           className="flex-1 py-3 text-gray-900"
-          placeholder="Insira sua senha"
+          placeholder={t('auth.passwordPlaceholder')}
           secureTextEntry={!show}
           onChangeText={(t) => setValue('password', t, { shouldValidate: true })}
           {...register('password')}
@@ -78,18 +82,18 @@ export default function SignUp() {
       {serverError && <Text className="mb-3 text-danger">{serverError}</Text>}
 
       <Pressable onPress={onSubmit} disabled={loading} className="items-center py-3 rounded-lg bg-primary">
-        {loading ? <ActivityIndicator color="#fff" /> : <Text className="font-semibold text-white">Criar conta</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text className="font-semibold text-white">{t('auth.createAccount')}</Text>}
       </Pressable>
 
       <View className="flex-row justify-center mt-6">
-        <Text className="text-gray-600">Já tem uma conta? </Text>
+        <Text className="text-gray-600">{t('auth.hasAccount')} </Text>
         <Pressable onPress={() => router.push('/(auth)/sign-in')}>
-          <Text className="text-primary">Entrar</Text>
+          <Text className="text-primary">{t('auth.signIn')}</Text>
         </Pressable>
       </View>
 
       <Text className="mt-8 text-xs text-center text-gray-400">
-        Ao continuar, você concorda com nossos <Text className="text-primary">Termos de Uso</Text> e <Text className="text-primary">Política de Privacidade</Text>
+        {t('auth.agreeTerms')} <Text className="text-primary">{t('auth.termsOfUse')}</Text> {t('common.and')} <Text className="text-primary">{t('auth.privacyPolicy')}</Text>
       </Text>
     </View>
   );

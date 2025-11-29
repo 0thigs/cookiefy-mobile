@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Modal,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
@@ -42,26 +43,28 @@ interface FavoritesFilters {
   authorName: string;
 }
 
-const DIFFICULTY_OPTIONS = [
-  { value: '', label: 'Todas' },
-  { value: 'EASY', label: 'Fácil' },
-  { value: 'MEDIUM', label: 'Média' },
-  { value: 'HARD', label: 'Difícil' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'favorited_desc', label: 'Favoritados Recentemente' },
-  { value: 'favorited_asc', label: 'Favoritados Antigamente' },
-  { value: 'newest', label: 'Receitas Mais Recentes' },
-  { value: 'oldest', label: 'Receitas Mais Antigas' },
-  { value: 'title_asc', label: 'Título A-Z' },
-  { value: 'title_desc', label: 'Título Z-A' },
-  { value: 'prep_time_asc', label: 'Menor Tempo de Prep' },
-  { value: 'prep_time_desc', label: 'Maior Tempo de Prep' },
-];
-
 export default function FavoritesScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+
+  const DIFFICULTY_OPTIONS = useMemo(() => [
+    { value: '', label: t('favorites.filters.difficulty.all') },
+    { value: 'EASY', label: t('favorites.filters.difficulty.easy') },
+    { value: 'MEDIUM', label: t('favorites.filters.difficulty.medium') },
+    { value: 'HARD', label: t('favorites.filters.difficulty.hard') },
+  ], [t]);
+
+  const SORT_OPTIONS = useMemo(() => [
+    { value: 'favorited_desc', label: t('favorites.filters.sort.favoritedDesc') },
+    { value: 'favorited_asc', label: t('favorites.filters.sort.favoritedAsc') },
+    { value: 'newest', label: t('favorites.filters.sort.newest') },
+    { value: 'oldest', label: t('favorites.filters.sort.oldest') },
+    { value: 'title_asc', label: t('favorites.filters.sort.titleAsc') },
+    { value: 'title_desc', label: t('favorites.filters.sort.titleDesc') },
+    { value: 'prep_time_asc', label: t('favorites.filters.sort.prepTimeAsc') },
+    { value: 'prep_time_desc', label: t('favorites.filters.sort.prepTimeDesc') },
+  ], [t]);
+
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('favorites');
@@ -131,9 +134,9 @@ export default function FavoritesScreen() {
     const INT32_MAX_STR = '2147483647';
     const exceedsMaxInt32 = (val?: string) => {
       if (!val) return false;
-      const t = String(val).trim();
-      if (t === '') return false;
-      const digits = t.replace(/\D/g, '');
+      const tVal = String(val).trim();
+      if (tVal === '') return false;
+      const digits = tVal.replace(/\D/g, '');
       if (digits.length === 0) return false;
       if (digits.length > 10) return true;
       if (digits.length < 10) return false;
@@ -148,16 +151,17 @@ export default function FavoritesScreen() {
       const min = toNum(f[minField] as string);
       const max = toNum(f[maxField] as string);
       if (min != null && max != null && min > max) {
-        e[minField as string] = `${label}: mínimo maior que máximo`;
-        e[maxField as string] = `${label}: mínimo maior que máximo`;
+        const msg = t('favorites.errors.minMax', { label });
+        e[minField as string] = msg;
+        e[maxField as string] = msg;
       }
     };
 
     // Pares de intervalo
-    pair('minPrep', 'maxPrep', 'Tempo de preparo');
-    pair('minCook', 'maxCook', 'Tempo de cozimento');
-    pair('totalTimeMin', 'totalTimeMax', 'Tempo total');
-    pair('minServings', 'maxServings', 'Porções');
+    pair('minPrep', 'maxPrep', t('favorites.labels.prepTime'));
+    pair('minCook', 'maxCook', t('favorites.labels.cookTime'));
+    pair('totalTimeMin', 'totalTimeMax', t('favorites.labels.totalTime'));
+    pair('minServings', 'maxServings', t('favorites.labels.servings'));
 
     // Campos que devem ser >= 0 (exceto porções)
     const nonNegative: (keyof FavoritesFilters)[] = [
@@ -176,11 +180,11 @@ export default function FavoritesScreen() {
       const v = f[k] as string;
       const n = toNum(v);
       if (n != null && n < 0) {
-        e[k as string] = 'Valor não pode ser negativo';
+        e[k as string] = t('favorites.errors.negative');
         return;
       }
       if (exceedsMaxInt32(v)) {
-        e[k as string] = 'Valor excede o máximo permitido';
+        e[k as string] = t('favorites.errors.maxExceeded');
       }
     });
 
@@ -189,10 +193,10 @@ export default function FavoritesScreen() {
       const v = f[k];
       const n = toNum(v);
       if (n != null && n < 1) {
-        e[k as string] = 'Porções deve ser no mínimo 1';
+        e[k as string] = t('favorites.errors.minServings');
       }
       if (exceedsMaxInt32(v)) {
-        e[k as string] = 'Valor excede o máximo permitido';
+        e[k as string] = t('favorites.errors.maxExceeded');
       }
     });
 
@@ -351,18 +355,18 @@ export default function FavoritesScreen() {
       <View className="flex-1 bg-white">
         <View className="flex-row items-center justify-between border-b border-gray-200 p-4">
           <Pressable onPress={() => setShowFilters(false)}>
-            <Text className="text-lg font-semibold text-primary">Cancelar</Text>
+            <Text className="text-lg font-semibold text-primary">{t('common.cancel')}</Text>
           </Pressable>
-          <Text className="text-lg font-semibold text-gray-900">Filtros</Text>
+          <Text className="text-lg font-semibold text-gray-900">{t('favorites.filters.title')}</Text>
           <Pressable onPress={clearFilters}>
-            <Text className="text-lg font-semibold text-red-500">Limpar</Text>
+            <Text className="text-lg font-semibold text-red-500">{t('common.clear')}</Text>
           </Pressable>
         </View>
 
         <ScrollView className="flex-1 p-4">
           {/* Dificuldade */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Dificuldade</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.difficulty.title')}</Text>
             <View className="flex-row flex-wrap gap-2">
               {DIFFICULTY_OPTIONS.map((option) => (
                 <Pressable
@@ -383,10 +387,10 @@ export default function FavoritesScreen() {
           </View>
 
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo de Preparo (min)</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.prepTime')}</Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.minPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
@@ -399,7 +403,7 @@ export default function FavoritesScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.maxPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="120"
@@ -416,11 +420,11 @@ export default function FavoritesScreen() {
 
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">
-              Tempo de Cozimento (min)
+              {t('favorites.filters.cookTime')}
             </Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.minCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
@@ -433,7 +437,7 @@ export default function FavoritesScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.maxCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="180"
@@ -450,10 +454,10 @@ export default function FavoritesScreen() {
 
           {/* Tempo Total */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo Total (min)</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.totalTime')}</Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.totalTimeMin ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
@@ -466,7 +470,7 @@ export default function FavoritesScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.totalTimeMax ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="300"
@@ -483,24 +487,24 @@ export default function FavoritesScreen() {
 
           {/* Ingredientes */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.ingredients')}</Text>
             <TextInput
               className="rounded-lg border border-gray-300 px-3 py-2"
-              placeholder="Ex: frango, cebola, alho"
+              placeholder={t('favorites.filters.ingredientsPlaceholder')}
               value={filters.ingredients}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, ingredients: text }))}
             />
             <Text className="mt-1 text-xs text-gray-500">
-              Separe múltiplos ingredientes com vírgula
+              {t('favorites.filters.ingredientsHelp')}
             </Text>
           </View>
 
           {/* Porções */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Porções</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.servings')}</Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.minServings ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="1"
@@ -513,7 +517,7 @@ export default function FavoritesScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('common.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.maxServings ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="10"
@@ -530,10 +534,10 @@ export default function FavoritesScreen() {
 
           {/* Autor */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Autor</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.author')}</Text>
             <TextInput
               className="rounded-lg border border-gray-300 px-3 py-2"
-              placeholder="Ex: João Silva"
+              placeholder={t('favorites.filters.authorPlaceholder')}
               value={filters.authorName}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, authorName: text }))}
             />
@@ -541,7 +545,7 @@ export default function FavoritesScreen() {
 
           {/* Calorias */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Calorias Máximas</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.maxCalories')}</Text>
             <TextInput
               className="rounded-lg border border-gray-300 px-3 py-2"
               placeholder="Ex: 500"
@@ -556,7 +560,7 @@ export default function FavoritesScreen() {
 
           {/* Ordenação */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Ordenar por</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('favorites.filters.sortBy')}</Text>
             <View className="space-y-2">
               {SORT_OPTIONS.map((option) => (
                 <Pressable
@@ -589,7 +593,7 @@ export default function FavoritesScreen() {
 
         <View className="border-t border-gray-200 p-4">
           <Pressable onPress={() => setShowFilters(false)} className="rounded-lg bg-primary py-3">
-            <Text className="text-center font-semibold text-white">Aplicar Filtros</Text>
+            <Text className="text-center font-semibold text-white">{t('favorites.filters.apply')}</Text>
           </Pressable>
         </View>
       </View>
@@ -608,7 +612,7 @@ export default function FavoritesScreen() {
             <Ionicons name="search-outline" size={20} color="#6B7280" />
             <TextInput
               className="ml-3 flex-1 py-2 text-base"
-              placeholder="Buscar favoritos..."
+              placeholder={t('favorites.searchPlaceholder')}
               value={filters.q}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, q: text }))}
               returnKeyType="search"
@@ -633,11 +637,11 @@ export default function FavoritesScreen() {
 
         <View className="mt-3 flex-row items-center justify-between">
           <Text className="text-md text-gray-700">
-            {totalResults} {totalResults === 1 ? 'receita encontrada' : 'receitas encontradas'}
+            {t('favorites.resultsCount', { count: totalResults })}
           </Text>
           {hasActiveFilters && (
             <Pressable onPress={clearFilters}>
-              <Text className="text-sm text-primary">Limpar filtros</Text>
+              <Text className="text-sm text-primary">{t('favorites.clearFilters')}</Text>
             </Pressable>
           )}
         </View>
@@ -646,15 +650,15 @@ export default function FavoritesScreen() {
       {loading && recipes.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text className="mt-4 text-gray-600">Carregando favoritos...</Text>
+          <Text className="mt-4 text-gray-600">{t('favorites.loading')}</Text>
         </View>
       ) : recipes.length === 0 ? (
         <EmptyState
-          title="Nenhum favorito encontrado"
+          title={t('favorites.empty.title')}
           description={
             hasActiveFilters
-              ? 'Tente ajustar os filtros ou limpar para ver mais favoritos.'
-              : 'Você ainda não tem receitas favoritadas. Que tal começar a salvar suas receitas favoritas?'
+              ? t('favorites.empty.descriptionFilters')
+              : t('favorites.empty.description')
           }
           icon="heart-outline"
         />

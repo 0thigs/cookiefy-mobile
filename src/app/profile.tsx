@@ -1,24 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  Alert,
-  ActivityIndicator,
-  Image,
-  TextInput,
-  ScrollView,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
+import { BottomNavBar } from '../components/BottomNavBar';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
 import { deleteAccount, updateUser } from '../services/users';
-import { router } from 'expo-router';
-import { BottomNavBar } from '../components/BottomNavBar';
 
 export default function Profile() {
   const { me, signOut, refreshMe } = useAuth();
   const { handleTabPress } = useNavigation();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -35,10 +37,10 @@ export default function Profile() {
   }, [me]);
 
   async function handleDelete() {
-    Alert.alert('Deletar conta', 'Tem certeza? Esta ação é irreversível.', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('profile.deleteAccount'), t('profile.deleteAccountConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Deletar',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           setLoading(true);
@@ -47,7 +49,7 @@ export default function Profile() {
             await signOut();
             router.replace('/(auth)/welcome');
           } catch (err: any) {
-            Alert.alert('Erro', err?.message ?? 'Não foi possível deletar a conta');
+            Alert.alert(t('common.error'), err?.message ?? t('common.unknown'));
           } finally {
             setLoading(false);
           }
@@ -62,9 +64,9 @@ export default function Profile() {
       await updateUser({ name: name.trim(), email: email.trim(), photoUrl: photoUrl || null });
       await refreshMe();
       setExpandedSection(null);
-      Alert.alert('Sucesso', 'Perfil atualizado');
+      Alert.alert(t('common.success'), t('profile.title') + ' ' + t('common.success').toLowerCase());
     } catch (err: any) {
-      Alert.alert('Erro', err?.message ?? 'Não foi possível salvar');
+      Alert.alert(t('common.error'), err?.message ?? t('common.unknown'));
     } finally {
       setSaving(false);
     }
@@ -94,7 +96,7 @@ export default function Profile() {
             className="mt-6 w-full items-center rounded-lg border border-gray-200 bg-white px-4 py-3 active:bg-gray-50"
             onPress={() => router.push('/settings')}
           >
-            <Text className="text-base font-medium text-gray-800">Abrir configurações</Text>
+            <Text className="text-base font-medium text-gray-800">{t('profile.settings')}</Text>
           </Pressable>
 
           {me?.role === 'ADMIN' && (
@@ -108,7 +110,7 @@ export default function Profile() {
                     <Ionicons name="shield-checkmark-outline" size={20} color="#9333EA" />
                   </View>
                   <Text className="flex-1 text-base font-medium text-gray-800">
-                    Painel Administrativo
+                    {t('profile.adminDashboard')}
                   </Text>
                   <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                 </Pressable>
@@ -127,7 +129,7 @@ export default function Profile() {
                   <Ionicons name="person-outline" size={20} color="#F37A2D" />
                 </View>
                 <Text className="flex-1 text-base font-medium text-gray-800">
-                  Detalhes do perfil
+                  {t('profile.editProfile')}
                 </Text>
                 <View
                   style={{
@@ -139,20 +141,20 @@ export default function Profile() {
 
               {expandedSection === 'profile' && (
                 <View className="w-full bg-white px-4 py-4">
-                  <Text className="mb-4 text-lg font-bold text-gray-800">Detalhes do perfil</Text>
+                  <Text className="mb-4 text-lg font-bold text-gray-800">{t('profile.editProfile')}</Text>
 
                   <View className="mb-4">
-                    <Text className="mb-2 text-sm text-gray-500">Nome</Text>
+                    <Text className="mb-2 text-sm text-gray-500">{t('auth.name')}</Text>
                     <TextInput
                       className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-gray-800"
                       value={name}
-                      placeholder="Seu nome"
+                      placeholder={t('auth.namePlaceholder')}
                       onChangeText={setName}
                     />
                   </View>
 
                   <View className="mb-4">
-                    <Text className="mb-2 text-sm text-gray-500">Email</Text>
+                    <Text className="mb-2 text-sm text-gray-500">{t('auth.email')}</Text>
                     <TextInput
                       className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-gray-800"
                       value={email}
@@ -164,11 +166,11 @@ export default function Profile() {
                   </View>
 
                   <View className="mb-6">
-                    <Text className="mb-2 text-sm text-gray-500">Foto (URL)</Text>
+                    <Text className="mb-2 text-sm text-gray-500">{t('profile.photoUrl')}</Text>
                     <TextInput
                       className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-gray-800"
                       value={photoUrl ?? ''}
-                      placeholder="URL da foto"
+                      placeholder={t('profile.photoUrlPlaceholder')}
                       onChangeText={(t) => setPhotoUrl(t)}
                     />
                   </View>
@@ -182,13 +184,13 @@ export default function Profile() {
                       {saving ? (
                         <ActivityIndicator color="#fff" />
                       ) : (
-                        <Text className="font-bold text-white">Salvar</Text>
+                        <Text className="font-bold text-white">{t('common.save')}</Text>
                       )}
                     </Pressable>
                     <Pressable
                       className="items-center rounded-lg border border-gray-200 bg-white px-4 py-3 active:bg-gray-50"
                       onPress={() => setExpandedSection(null)}>
-                      <Text className="text-gray-800">Cancelar</Text>
+                      <Text className="text-gray-800">{t('common.cancel')}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -200,7 +202,7 @@ export default function Profile() {
                 <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                   <Ionicons name="settings-outline" size={20} color="#3B82F6" />
                 </View>
-                <Text className="flex-1 text-base font-medium text-gray-800">Configurações</Text>
+                <Text className="flex-1 text-base font-medium text-gray-800">{t('profile.settings')}</Text>
                 <View
                   style={{
                     transform: [{ rotate: expandedSection === 'settings' ? '90deg' : '0deg' }],
@@ -215,7 +217,7 @@ export default function Profile() {
                   <Pressable
                     className="mb-2 rounded-lg border border-gray-200 bg-white px-3 py-3 active:bg-gray-50"
                     onPress={() => router.push('/settings')}>
-                    <Text className="text-gray-800">Abrir configurações</Text>
+                    <Text className="text-gray-800">{t('profile.settings')}</Text>
                   </Pressable>
                 </View>
               )}
@@ -229,7 +231,7 @@ export default function Profile() {
                 <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-red-100">
                   <Ionicons name="log-out-outline" size={20} color="#EF4444" />
                 </View>
-                <Text className="flex-1 text-base font-medium text-gray-800">Sair</Text>
+                <Text className="flex-1 text-base font-medium text-gray-800">{t('profile.logout')}</Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </Pressable>
             </View>
@@ -241,7 +243,7 @@ export default function Profile() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text className="text-base font-bold text-white">Deletar conta</Text>
+              <Text className="text-base font-bold text-white">{t('profile.deleteAccount')}</Text>
             )}
           </Pressable>
         </View>
@@ -251,3 +253,4 @@ export default function Profile() {
     </View>
   );
 }
+

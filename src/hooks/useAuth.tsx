@@ -6,7 +6,8 @@ import {
   signIn as apiSignIn,
   signInWithGoogle as apiSignInWithGoogle,
   signOut as apiSignOut,
-  signUp as apiSignUp
+  signUp as apiSignUp,
+  onSessionExpired
 } from './auth-client';
 
 type AuthContextType = {
@@ -24,6 +25,14 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onSessionExpired(() => {
+      setMe(null);
+      router.replace('/(auth)/welcome');
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     (async () => {

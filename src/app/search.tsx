@@ -1,23 +1,24 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-  RefreshControl,
-  ScrollView,
-  Modal,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { listPublicRecipes, getRecipeDetail, RecipeBrief } from '../services/recipes';
-import { colors } from '../theme/colors';
-import { RecipeCard } from '../components/RecipeCard';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+    ActivityIndicator,
+    FlatList,
+    Modal,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
+import { RecipeCard } from '../components/RecipeCard';
 import { useNavigation } from '../hooks/useNavigation';
+import { getRecipeDetail, listPublicRecipes, RecipeBrief } from '../services/recipes';
+import { colors } from '../theme/colors';
 
 interface SearchFilters {
   q: string;
@@ -42,25 +43,8 @@ interface SearchFilters {
   authorName: string;
 }
 
-const DIFFICULTY_OPTIONS = [
-  { value: '', label: 'Todas' },
-  { value: 'EASY', label: 'Fácil' },
-  { value: 'MEDIUM', label: 'Média' },
-  { value: 'HARD', label: 'Difícil' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'Mais Recentes' },
-  { value: 'oldest', label: 'Mais Antigas' },
-  { value: 'title_asc', label: 'Título A-Z' },
-  { value: 'title_desc', label: 'Título Z-A' },
-  { value: 'prep_time_asc', label: 'Menor Tempo de Prep' },
-  { value: 'prep_time_desc', label: 'Maior Tempo de Prep' },
-  { value: 'cook_time_asc', label: 'Menor Tempo de Cozimento' },
-  { value: 'cook_time_desc', label: 'Maior Tempo de Cozimento' },
-];
-
 export default function SearchScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -72,6 +56,24 @@ export default function SearchScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { handleTabPress } = useNavigation();
+
+  const DIFFICULTY_OPTIONS = useMemo(() => [
+    { value: '', label: t('search.filters.all') },
+    { value: 'EASY', label: t('recipe.difficulty.easy') },
+    { value: 'MEDIUM', label: t('recipe.difficulty.medium') },
+    { value: 'HARD', label: t('recipe.difficulty.hard') },
+  ], [t]);
+
+  const SORT_OPTIONS = useMemo(() => [
+    { value: 'newest', label: t('search.sort.newest') },
+    { value: 'oldest', label: t('search.sort.oldest') },
+    { value: 'title_asc', label: t('search.sort.titleAsc') },
+    { value: 'title_desc', label: t('search.sort.titleDesc') },
+    { value: 'prep_time_asc', label: t('search.sort.prepTimeAsc') },
+    { value: 'prep_time_desc', label: t('search.sort.prepTimeDesc') },
+    { value: 'cook_time_asc', label: t('search.sort.cookTimeAsc') },
+    { value: 'cook_time_desc', label: t('search.sort.cookTimeDesc') },
+  ], [t]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     q: '',
@@ -138,16 +140,16 @@ export default function SearchScreen() {
       const min = toNum(f[minField] as string);
       const max = toNum(f[maxField] as string);
       if (min != null && max != null && min > max) {
-        e[minField as string] = `${label}: mínimo maior que máximo`;
-        e[maxField as string] = `${label}: mínimo maior que máximo`;
+        e[minField as string] = t('search.errors.minMax', { label });
+        e[maxField as string] = t('search.errors.minMax', { label });
       }
     };
 
     // Pares de intervalo
-    pair('minPrep', 'maxPrep', 'Tempo de preparo');
-    pair('minCook', 'maxCook', 'Tempo de cozimento');
-    pair('totalTimeMin', 'totalTimeMax', 'Tempo total');
-    pair('minServings', 'maxServings', 'Porções');
+    pair('minPrep', 'maxPrep', t('recipe.prepTime'));
+    pair('minCook', 'maxCook', t('recipe.cookTime'));
+    pair('totalTimeMin', 'totalTimeMax', t('recipe.totalTime'));
+    pair('minServings', 'maxServings', t('recipe.servings'));
 
     // Campos que devem ser >= 0 (exceto porções)
     const nonNegative: (keyof SearchFilters)[] = [
@@ -166,11 +168,11 @@ export default function SearchScreen() {
       const v = f[k] as string;
       const n = toNum(v);
       if (n != null && n < 0) {
-        e[k as string] = 'Valor não pode ser negativo';
+        e[k as string] = t('search.errors.negative');
         return;
       }
       if (exceedsMaxInt32(v)) {
-        e[k as string] = 'Valor excede o máximo permitido';
+        e[k as string] = t('search.errors.maxExceeded');
       }
     });
 
@@ -179,15 +181,15 @@ export default function SearchScreen() {
       const v = f[k];
       const n = toNum(v);
       if (n != null && n < 1) {
-        e[k as string] = 'Porções deve ser no mínimo 1';
+        e[k as string] = t('search.errors.minServings');
       }
       if (exceedsMaxInt32(v)) {
-        e[k as string] = 'Valor excede o máximo permitido';
+        e[k as string] = t('search.errors.maxExceeded');
       }
     });
 
     return e;
-  }, []);
+  }, [t]);
 
   const handleNumericChange = (field: keyof SearchFilters, text: string) => {
     // Mantém apenas dígitos para evitar negativos e caracteres inválidos
@@ -312,18 +314,18 @@ export default function SearchScreen() {
       <View className="flex-1 bg-white">
         <View className="flex-row items-center justify-between border-b border-gray-200 p-4">
           <Pressable onPress={() => setShowFilters(false)}>
-            <Text className="text-lg font-semibold text-primary">Cancelar</Text>
+            <Text className="text-lg font-semibold text-primary">{t('common.cancel')}</Text>
           </Pressable>
-          <Text className="text-lg font-semibold text-gray-900">Filtros</Text>
+          <Text className="text-lg font-semibold text-gray-900">{t('search.filters.title')}</Text>
           <Pressable onPress={clearFilters}>
-            <Text className="text-lg font-semibold text-red-500">Limpar</Text>
+            <Text className="text-lg font-semibold text-red-500">{t('common.clear')}</Text>
           </Pressable>
         </View>
 
         <ScrollView className="flex-1 p-4">
           {/* Dificuldade */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Dificuldade</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.difficulty.title')}</Text>
             <View className="flex-row flex-wrap gap-2">
               {DIFFICULTY_OPTIONS.map((option) => (
                 <Pressable
@@ -345,10 +347,10 @@ export default function SearchScreen() {
 
           {/* Tempo de Preparo */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo de Preparo (min)</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.prepTime')} (min)</Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.minPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
@@ -361,7 +363,7 @@ export default function SearchScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.maxPrep ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="120"
@@ -379,11 +381,11 @@ export default function SearchScreen() {
           {/* Tempo de Cozimento */}
           <View className="mb-6">
             <Text className="mb-3 text-lg font-semibold text-gray-900">
-              Tempo de Cozimento (min)
+              {t('recipe.cookTime')} (min)
             </Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.minCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="0"
@@ -396,7 +398,7 @@ export default function SearchScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.maxCook ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="180"
@@ -413,10 +415,10 @@ export default function SearchScreen() {
 
           {/* Tempo Total */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Tempo Total (min)</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.totalTime')} (min)</Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.totalTimeMin ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="15"
@@ -429,7 +431,7 @@ export default function SearchScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.totalTimeMax ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="300"
@@ -446,24 +448,24 @@ export default function SearchScreen() {
 
           {/* Ingredientes */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Ingredientes</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.ingredients')}</Text>
             <TextInput
               className="rounded-lg border border-gray-300 px-3 py-2"
-              placeholder="Ex: frango, cebola, alho"
+              placeholder={t('search.filters.ingredientsPlaceholder')}
               value={filters.ingredients}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, ingredients: text }))}
             />
             <Text className="mt-1 text-xs text-gray-500">
-              Separe múltiplos ingredientes com vírgula
+              {t('search.filters.ingredientsHelp')}
             </Text>
           </View>
 
           {/* Autor */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Autor</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('search.filters.author')}</Text>
             <TextInput
               className="rounded-lg border border-gray-300 px-3 py-2"
-              placeholder="Ex: João Silva"
+              placeholder={t('search.filters.authorPlaceholder')}
               value={filters.authorName}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, authorName: text }))}
             />
@@ -471,10 +473,10 @@ export default function SearchScreen() {
 
           {/* Calorias */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Calorias Máximas</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('search.filters.maxCalories')}</Text>
             <TextInput
               className={`rounded-lg border px-3 py-2 ${errors.maxCalories ? 'border-red-500' : 'border-gray-300'}`}
-              placeholder="Ex: 500"
+              placeholder="500"
               value={filters.maxCalories}
               onChangeText={(text) => handleNumericChange('maxCalories', text)}
               keyboardType="numeric"
@@ -486,10 +488,10 @@ export default function SearchScreen() {
 
           {/* Porções */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Porções</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.servings')}</Text>
             <View className="flex-row gap-3">
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Mínimo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.min')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.minServings ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="1"
@@ -502,7 +504,7 @@ export default function SearchScreen() {
                 )}
               </View>
               <View className="flex-1">
-                <Text className="mb-1 text-sm text-gray-600">Máximo</Text>
+                <Text className="mb-1 text-sm text-gray-600">{t('search.filters.max')}</Text>
                 <TextInput
                   className={`rounded-lg border px-3 py-2 ${errors.maxServings ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="10"
@@ -519,7 +521,7 @@ export default function SearchScreen() {
 
           {/* Ordenação */}
           <View className="mb-6">
-            <Text className="mb-3 text-lg font-semibold text-gray-900">Ordenar por</Text>
+            <Text className="mb-3 text-lg font-semibold text-gray-900">{t('search.sort.title')}</Text>
             <View className="space-y-2">
               {SORT_OPTIONS.map((option) => (
                 <Pressable
@@ -552,7 +554,7 @@ export default function SearchScreen() {
 
         <View className="border-t border-gray-200 p-4">
           <Pressable onPress={() => setShowFilters(false)} className="rounded-lg bg-primary py-3">
-            <Text className="text-center font-semibold text-white">Aplicar Filtros</Text>
+            <Text className="text-center font-semibold text-white">{t('search.filters.apply')}</Text>
           </Pressable>
         </View>
       </View>
@@ -572,7 +574,7 @@ export default function SearchScreen() {
             <Ionicons name="search-outline" size={20} color="#6B7280" />
             <TextInput
               className="ml-3 flex-1 py-2 text-base"
-              placeholder="Buscar receitas, ingredientes..."
+              placeholder={t('search.placeholder')}
               value={filters.q}
               onChangeText={(text) => setFilters((prev) => ({ ...prev, q: text }))}
               returnKeyType="search"
@@ -598,11 +600,11 @@ export default function SearchScreen() {
         {/* Resultados */}
         <View className="mt-3 flex-row items-center justify-between">
           <Text className="text-sm text-gray-600">
-            {totalResults} {totalResults === 1 ? 'receita encontrada' : 'receitas encontradas'}
+            {totalResults} {totalResults === 1 ? t('search.resultFound') : t('search.resultsFound')}
           </Text>
           {hasActiveFilters && (
             <Pressable onPress={clearFilters}>
-              <Text className="text-sm text-primary">Limpar filtros</Text>
+              <Text className="text-sm text-primary">{t('search.filters.clear')}</Text>
             </Pressable>
           )}
         </View>
@@ -612,15 +614,15 @@ export default function SearchScreen() {
       {loading && recipes.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text className="mt-4 text-gray-600">Buscando receitas...</Text>
+          <Text className="mt-4 text-gray-600">{t('search.searching')}</Text>
         </View>
       ) : recipes.length === 0 ? (
         <EmptyState
-          title="Nenhuma receita encontrada"
+          title={t('search.empty.title')}
           description={
             hasActiveFilters
-              ? 'Tente ajustar os filtros ou limpar para ver mais receitas.'
-              : 'Não encontramos receitas com os critérios de busca.'
+              ? t('search.empty.filters')
+              : t('search.empty.noResults')
           }
           icon="search-outline"
         />

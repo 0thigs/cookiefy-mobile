@@ -1,105 +1,110 @@
-import { useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-  Pressable,
-  Switch,
+    ActivityIndicator,
+    Alert,
+    Pressable,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { listCategories, type Category } from '../../services/categories';
-import { createRecipe, publishRecipe } from '../../services/recipes';
-import { router, useLocalSearchParams } from 'expo-router';
 import { colors } from '../../theme/colors';
 
 const MAX_INT64_STR = '9223372036854775807';
-const nonNegativeNumericString = z
-  .string()
-  .optional()
-  .refine(
-    (v) => {
-      if (v == null || String(v).trim() === '') return true;
-      const t = String(v).trim();
-      const n = Number(t.replace(',', '.'));
-      if (!Number.isFinite(n) || n < 0) return false;
-      return true;
-    },
-    { message: 'Valor não pode ser negativo' }
-  )
-  .refine(
-    (v) => {
-      if (v == null || String(v).trim() === '') return true;
-      const t = String(v).trim();
-      const intPart = t.split(/[.,]/)[0].replace(/\D/g, '');
-      if (intPart.length === 0) return true;
-      if (intPart.length > 19) return false;
-      if (intPart.length < 19) return true;
-      return intPart <= MAX_INT64_STR;
-    },
-    { message: 'Valor excede o máximo permitido' }
-  );
-
-const schema = z.object({
-  title: z.string().min(2, 'Informe um título'),
-  description: z.string().optional(),
-  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
-  prepMinutes: nonNegativeNumericString,
-  cookMinutes: nonNegativeNumericString,
-  servings: nonNegativeNumericString,
-  nutrition: z
-    .object({
-      calories: nonNegativeNumericString, // kcal
-      protein: nonNegativeNumericString, // g
-      carbs: nonNegativeNumericString, // g
-      fat: nonNegativeNumericString, // g
-      fiber: nonNegativeNumericString, // g
-      sodium: nonNegativeNumericString, // mg
-    })
-    .optional(),
-
-  steps: z
-    .array(
-      z.object({
-        text: z.string().min(1, 'Descreva o passo'),
-        durationSec: nonNegativeNumericString,
-      })
-    )
-    .optional(),
-
-  photos: z
-    .array(
-      z.object({
-        url: z.string().url('URL inválida'),
-        alt: z.string().optional(),
-      })
-    )
-    .optional(),
-
-  ingredients: z
-    .array(
-      z.object({
-        name: z.string().min(1, 'Nome do ingrediente'),
-        amount: nonNegativeNumericString,
-        unit: z.string().optional(),
-      })
-    )
-    .optional(),
-
-  categoriesIds: z.array(z.string()).optional(),
-  publishNow: z.boolean().default(true),
-});
-type SchemaInput = z.input<typeof schema>;
-type SchemaOutput = z.output<typeof schema>;
 
 export default function NewRecipeScreen() {
+  const { t } = useTranslation();
   const [loadingCats, setLoadingCats] = useState(true);
   const [cats, setCats] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const schema = useMemo(() => {
+    const nonNegativeNumericString = z
+      .string()
+      .optional()
+      .refine(
+        (v) => {
+          if (v == null || String(v).trim() === '') return true;
+          const tVal = String(v).trim();
+          const n = Number(tVal.replace(',', '.'));
+          if (!Number.isFinite(n) || n < 0) return false;
+          return true;
+        },
+        { message: t('validation.nonNegative') }
+      )
+      .refine(
+        (v) => {
+          if (v == null || String(v).trim() === '') return true;
+          const tVal = String(v).trim();
+          const intPart = tVal.split(/[.,]/)[0].replace(/\D/g, '');
+          if (intPart.length === 0) return true;
+          if (intPart.length > 19) return false;
+          if (intPart.length < 19) return true;
+          return intPart <= MAX_INT64_STR;
+        },
+        { message: t('validation.maxExceeded') }
+      );
+
+    return z.object({
+      title: z.string().min(2, t('validation.requiredTitle')),
+      description: z.string().optional(),
+      difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
+      prepMinutes: nonNegativeNumericString,
+      cookMinutes: nonNegativeNumericString,
+      servings: nonNegativeNumericString,
+      nutrition: z
+        .object({
+          calories: nonNegativeNumericString, // kcal
+          protein: nonNegativeNumericString, // g
+          carbs: nonNegativeNumericString, // g
+          fat: nonNegativeNumericString, // g
+          fiber: nonNegativeNumericString, // g
+          sodium: nonNegativeNumericString, // mg
+        })
+        .optional(),
+
+      steps: z
+        .array(
+          z.object({
+            text: z.string().min(1, t('validation.requiredStep')),
+            durationSec: nonNegativeNumericString,
+          })
+        )
+        .optional(),
+
+      photos: z
+        .array(
+          z.object({
+            url: z.string().url(t('validation.invalidUrl')),
+            alt: z.string().optional(),
+          })
+        )
+        .optional(),
+
+      ingredients: z
+        .array(
+          z.object({
+            name: z.string().min(1, t('validation.requiredIngredient')),
+            amount: nonNegativeNumericString,
+            unit: z.string().optional(),
+          })
+        )
+        .optional(),
+
+      categoriesIds: z.array(z.string()).optional(),
+      publishNow: z.boolean().default(true),
+    });
+  }, [t]);
+
+  type SchemaInput = z.input<typeof schema>;
+  type SchemaOutput = z.output<typeof schema>;
 
   const {
     control,
@@ -282,15 +287,15 @@ export default function NewRecipeScreen() {
           await publishRecipe(String(draftId));
         }
         Alert.alert(
-          'Sucesso',
-          form.publishNow ? 'Receita atualizada e publicada!' : 'Rascunho atualizado!',
+          t('common.success'),
+          form.publishNow ? t('recipe.updatedAndPublished') : t('recipe.draftUpdated'),
           [{ text: 'OK', onPress: () => router.replace('/settings') }]
         );
       } else if (recipeId) {
         const { updateRecipe } = await import('../../services/recipes');
         console.log('Update recipe payload:', payload);
         await updateRecipe(String(recipeId), payload as any);
-        Alert.alert('Sucesso', 'Receita atualizada!', [
+        Alert.alert(t('common.success'), t('recipe.updated'), [
           { text: 'OK', onPress: () => router.replace('/settings') },
         ]);
       } else {
@@ -301,14 +306,14 @@ export default function NewRecipeScreen() {
         if (form.publishNow) {
           await publishRecipe(created.id);
         }
-        Alert.alert('Sucesso', 'Receita criada!', [
+        Alert.alert(t('common.success'), t('recipe.created'), [
           { text: 'OK', onPress: () => router.replace('/') },
         ]);
       }
     } catch (e: any) {
       console.log('Erro ao salvar receita:', e);
       if (e?.message !== 'nutrition_invalid') {
-        Alert.alert('Erro', e?.message ?? 'Não foi possível salvar a receita');
+        Alert.alert(t('common.error'), e?.message ?? t('recipe.saveError'));
       }
     } finally {
       setSubmitting(false);
@@ -327,16 +332,16 @@ export default function NewRecipeScreen() {
     <ScrollView
       className="flex-1 bg-white"
       contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-      <Text className="mb-3 text-center text-2xl font-bold">Nova receita</Text>
+      <Text className="mb-3 text-center text-2xl font-bold">{t('recipe.newRecipe')}</Text>
 
-      <Text className="mb-1 font-medium">Título *</Text>
+      <Text className="mb-1 font-medium">{t('recipe.title')} *</Text>
       <Controller
         control={control}
         name="title"
         render={({ field: { onChange, value } }) => (
           <TextInput
             className="mb-1 w-full rounded-lg border border-gray-300 px-4 py-3"
-            placeholder="Ex.: Spaghetti Carbonara Clássico"
+            placeholder={t('recipe.titlePlaceholder')}
             value={value}
             onChangeText={onChange}
           />
@@ -344,14 +349,14 @@ export default function NewRecipeScreen() {
       />
       {errors.title && <Text className="text-danger mb-3">{errors.title.message}</Text>}
 
-      <Text className="mb-1 font-medium">Descrição</Text>
+      <Text className="mb-1 font-medium">{t('recipe.description')}</Text>
       <Controller
         control={control}
         name="description"
         render={({ field: { onChange, value } }) => (
           <TextInput
             className="mb-3 w-full rounded-lg border border-gray-300 px-4 py-3"
-            placeholder="Fale um pouco sobre a receita"
+            placeholder={t('recipe.descriptionPlaceholder')}
             value={value}
             onChangeText={onChange}
             multiline
@@ -359,7 +364,7 @@ export default function NewRecipeScreen() {
         )}
       />
 
-      <Text className="mb-1 font-medium">Dificuldade</Text>
+      <Text className="mb-1 font-medium">{t('recipe.difficulty.label')}</Text>
       <View className="mb-3 flex-row">
         {(['EASY', 'MEDIUM', 'HARD'] as const).map((d) => (
           <Controller
@@ -368,7 +373,7 @@ export default function NewRecipeScreen() {
             name="difficulty"
             render={({ field: { value, onChange } }) => (
               <Chip selected={value === d} onPress={() => onChange(d)}>
-                {d === 'EASY' ? 'Fácil' : d === 'MEDIUM' ? 'Média' : 'Difícil'}
+                {d === 'EASY' ? t('recipe.difficulty.easy') : d === 'MEDIUM' ? t('recipe.difficulty.medium') : t('recipe.difficulty.hard')}
               </Chip>
             )}
           />
@@ -377,7 +382,7 @@ export default function NewRecipeScreen() {
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Preparo (min)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.prepTime')} (min)</Text>
           <Controller
             control={control}
             name="prepMinutes"
@@ -396,7 +401,7 @@ export default function NewRecipeScreen() {
           )}
         </View>
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Cocção (min)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.cookTime')} (min)</Text>
           <Controller
             control={control}
             name="cookMinutes"
@@ -415,7 +420,7 @@ export default function NewRecipeScreen() {
           )}
         </View>
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Porções</Text>
+          <Text className="mb-1 font-medium">{t('recipe.servings')}</Text>
           <Controller
             control={control}
             name="servings"
@@ -435,11 +440,11 @@ export default function NewRecipeScreen() {
         </View>
       </View>
 
-      <Text className="mb-2 text-lg font-semibold">Informações nutricionais (opcional)</Text>
+      <Text className="mb-2 text-lg font-semibold">{t('recipe.nutrition')} ({t('common.optional')})</Text>
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Calorias (kcal)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.calories')} (kcal)</Text>
           <Controller
             control={control}
             name="nutrition.calories"
@@ -461,7 +466,7 @@ export default function NewRecipeScreen() {
         </View>
 
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Proteína (g)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.protein')} (g)</Text>
           <Controller
             control={control}
             name="nutrition.protein"
@@ -485,7 +490,7 @@ export default function NewRecipeScreen() {
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Carboidratos (g)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.carbs')} (g)</Text>
           <Controller
             control={control}
             name="nutrition.carbs"
@@ -507,7 +512,7 @@ export default function NewRecipeScreen() {
         </View>
 
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Gorduras (g)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.fat')} (g)</Text>
           <Controller
             control={control}
             name="nutrition.fat"
@@ -531,7 +536,7 @@ export default function NewRecipeScreen() {
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Fibra (g)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.fiber')} (g)</Text>
           <Controller
             control={control}
             name="nutrition.fiber"
@@ -548,7 +553,7 @@ export default function NewRecipeScreen() {
         </View>
 
         <View className="flex-1">
-          <Text className="mb-1 font-medium">Sódio (mg)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.sodium')} (mg)</Text>
           <Controller
             control={control}
             name="nutrition.sodium"
@@ -565,17 +570,17 @@ export default function NewRecipeScreen() {
         </View>
       </View>
 
-      <Text className="mb-2 text-lg font-semibold">Ingredientes *</Text>
+      <Text className="mb-2 text-lg font-semibold">{t('recipe.ingredients')} *</Text>
       {ingredients.fields.map((f, idx) => (
         <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
-          <Text className="mb-1 font-medium">Nome</Text>
+          <Text className="mb-1 font-medium">{t('recipe.ingredientName')}</Text>
           <Controller
             control={control}
             name={`ingredients.${idx}.name` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
                 className="mb-2 rounded-lg border border-gray-300 px-3 py-2"
-                placeholder="Ex.: Tomate"
+                placeholder={t('recipe.ingredientNamePlaceholder')}
                 value={value}
                 onChangeText={onChange}
               />
@@ -588,7 +593,7 @@ export default function NewRecipeScreen() {
           )}
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text className="mb-1 font-medium">Quantidade</Text>
+              <Text className="mb-1 font-medium">{t('recipe.amount')}</Text>
               <Controller
                 control={control}
                 name={`ingredients.${idx}.amount` as const}
@@ -609,14 +614,14 @@ export default function NewRecipeScreen() {
               )}
             </View>
             <View className="flex-1">
-              <Text className="mb-1 font-medium">Unidade</Text>
+              <Text className="mb-1 font-medium">{t('recipe.unit')}</Text>
               <Controller
                 control={control}
                 name={`ingredients.${idx}.unit` as const}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
                     className="rounded-lg border border-gray-300 px-3 py-2"
-                    placeholder="Ex.: un, g, ml, xícara"
+                    placeholder={t('recipe.unitPlaceholder')}
                     value={value}
                     onChangeText={onChange}
                   />
@@ -627,27 +632,27 @@ export default function NewRecipeScreen() {
           <Pressable
             className="mt-2 self-end rounded-lg border border-gray-300 px-3 py-1"
             onPress={() => ingredients.remove(idx)}>
-            <Text className="text-gray-600">Remover</Text>
+            <Text className="text-gray-600">{t('common.remove')}</Text>
           </Pressable>
         </View>
       ))}
       <Pressable
         className="mb-4 items-center rounded-lg border border-gray-300 py-2"
         onPress={() => ingredients.append({ name: '', amount: '', unit: '' })}>
-        <Text className="font-medium text-gray-700">Adicionar ingrediente</Text>
+        <Text className="font-medium text-gray-700">{t('recipe.addIngredient')}</Text>
       </Pressable>
 
-      <Text className="mb-2 text-lg font-semibold">Modo de preparo *</Text>
+      <Text className="mb-2 text-lg font-semibold">{t('recipe.preparation')} *</Text>
       {steps.fields.map((f, idx) => (
         <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
-          <Text className="mb-1 font-medium">Passo {idx + 1}</Text>
+          <Text className="mb-1 font-medium">{t('recipe.step')} {idx + 1}</Text>
           <Controller
             control={control}
             name={`steps.${idx}.text` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
                 className="mb-2 rounded-lg border border-gray-300 px-3 py-2"
-                placeholder="Descreva o passo"
+                placeholder={t('recipe.stepPlaceholder')}
                 value={value}
                 onChangeText={onChange}
                 multiline
@@ -659,7 +664,7 @@ export default function NewRecipeScreen() {
               {String(errors.steps[idx]?.text?.message)}
             </Text>
           )}
-          <Text className="mb-1 font-medium">Duração (segundos, opcional)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.stepDuration')} ({t('common.optional')})</Text>
           <Controller
             control={control}
             name={`steps.${idx}.durationSec` as const}
@@ -681,17 +686,17 @@ export default function NewRecipeScreen() {
           <Pressable
             className="mt-2 self-end rounded-lg border border-gray-300 px-3 py-1"
             onPress={() => steps.remove(idx)}>
-            <Text className="text-gray-600">Remover</Text>
+            <Text className="text-gray-600">{t('common.remove')}</Text>
           </Pressable>
         </View>
       ))}
       <Pressable
         className="mb-4 items-center rounded-lg border border-gray-300 py-2"
         onPress={() => steps.append({ text: '', durationSec: '' })}>
-        <Text className="font-medium text-gray-700">Adicionar passo</Text>
+        <Text className="font-medium text-gray-700">{t('recipe.addStep')}</Text>
       </Pressable>
 
-      <Text className="mb-2 text-lg font-semibold">Fotos (URL pública) *</Text>
+      <Text className="mb-2 text-lg font-semibold">{t('recipe.photos')} ({t('recipe.publicUrl')}) *</Text>
       {photos.fields.map((f, idx) => (
         <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
           <Text className="mb-1 font-medium">URL</Text>
@@ -713,14 +718,14 @@ export default function NewRecipeScreen() {
               {String(errors.photos[idx]?.url?.message)}
             </Text>
           )}
-          <Text className="mb-1 font-medium">Alt (opcional)</Text>
+          <Text className="mb-1 font-medium">{t('recipe.photoAlt')} ({t('common.optional')})</Text>
           <Controller
             control={control}
             name={`photos.${idx}.alt` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
                 className="rounded-lg border border-gray-300 px-3 py-2"
-                placeholder="Descrição da imagem"
+                placeholder={t('recipe.photoAltPlaceholder')}
                 value={value}
                 onChangeText={onChange}
               />
@@ -729,17 +734,17 @@ export default function NewRecipeScreen() {
           <Pressable
             className="mt-2 self-end rounded-lg border border-gray-300 px-3 py-1"
             onPress={() => photos.remove(idx)}>
-            <Text className="text-gray-600">Remover</Text>
+            <Text className="text-gray-600">{t('common.remove')}</Text>
           </Pressable>
         </View>
       ))}
       <Pressable
         className="mb-4 items-center rounded-lg border border-gray-300 py-2"
         onPress={() => photos.append({ url: '', alt: '' })}>
-        <Text className="font-medium text-gray-700">Adicionar foto</Text>
+        <Text className="font-medium text-gray-700">{t('recipe.addPhoto')}</Text>
       </Pressable>
 
-      <Text className="mb-1 font-medium">Categorias</Text>
+      <Text className="mb-1 font-medium">{t('recipe.categories')}</Text>
       <View className="mb-3 flex-row flex-wrap">
         {loadingCats ? (
           <ActivityIndicator />
@@ -769,7 +774,7 @@ export default function NewRecipeScreen() {
       </View>
 
       <View className="mb-4 flex-row items-center justify-between">
-        <Text className="font-medium">Publicar agora</Text>
+        <Text className="font-medium">{t('recipe.publishNow')}</Text>
         <Controller
           control={control}
           name="publishNow"
@@ -797,14 +802,14 @@ export default function NewRecipeScreen() {
         {submitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text className="font-semibold text-white">Salvar receita</Text>
+          <Text className="font-semibold text-white">{t('recipe.saveRecipe')}</Text>
         )}
       </Pressable>
 
       <Pressable
         onPress={() => router.back()}
         className="mt-3 items-center rounded-lg border border-gray-300 py-3">
-        <Text className="font-semibold text-gray-700">Cancelar</Text>
+        <Text className="font-semibold text-gray-700">{t('common.cancel')}</Text>
       </Pressable>
     </ScrollView>
   );

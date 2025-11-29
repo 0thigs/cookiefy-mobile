@@ -1,17 +1,18 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  Image,
-  Dimensions,
-  ScrollView,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { colors } from '../../../theme/colors';
-import { useNavigation } from '../../../hooks/useNavigation';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+    Dimensions,
+    Image,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
+} from 'react-native';
 import { BottomNavBar } from '../../../components/BottomNavBar';
+import { useNavigation } from '../../../hooks/useNavigation';
+import { colors } from '../../../theme/colors';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ interface RecipeStepsProps {
 }
 
 export default function RecipeStepsScreen() {
+  const { t } = useTranslation();
   const { steps: stepsParam, title } = useLocalSearchParams<{ 
     steps: string; 
     title: string; 
@@ -72,16 +74,16 @@ export default function RecipeStepsScreen() {
         <View className="flex-1 justify-center items-center px-8">
           <Ionicons name="restaurant-outline" size={64} color={colors.muted} />
           <Text className="mt-4 text-lg font-semibold text-gray-900">
-            Nenhum passo encontrado
+            {t('recipe.noStepsFound')}
           </Text>
           <Text className="mt-2 text-center text-gray-600">
-            Esta receita não possui passos de preparo.
+            {t('recipe.noStepsDesc')}
           </Text>
           <Pressable
             onPress={() => router.back()}
             className="px-6 py-3 mt-6 rounded-lg bg-primary"
           >
-            <Text className="font-semibold text-white">Voltar</Text>
+            <Text className="font-semibold text-white">{t('common.back')}</Text>
           </Pressable>
         </View>
       </View>
@@ -98,7 +100,7 @@ export default function RecipeStepsScreen() {
             className="flex-row items-center"
           >
             <Ionicons name="arrow-back" size={24} color={colors.primary} />
-            <Text className="ml-2 text-lg font-semibold text-primary">Voltar</Text>
+            <Text className="ml-2 text-lg font-semibold text-primary">{t('common.back')}</Text>
           </Pressable>
           
           <View className="flex-1 mx-4">
@@ -114,7 +116,7 @@ export default function RecipeStepsScreen() {
       <View className="px-4 py-3 bg-gray-50">
         <View className="flex-row justify-between items-center mb-2">
           <Text className="text-sm font-medium text-gray-700">
-            Passo {currentStepIndex + 1} de {totalSteps}
+            {t('recipe.stepCounter', { current: currentStepIndex + 1, total: totalSteps })}
           </Text>
           <Text className="text-sm text-gray-500">
             {Math.round(progress)}%
@@ -155,7 +157,7 @@ export default function RecipeStepsScreen() {
                 </Text>
               </View>
               <Text className="ml-4 text-xl font-bold text-gray-900">
-                Passo {currentStepIndex + 1}
+                {t('recipe.step')} {currentStepIndex + 1}
               </Text>
             </View>
             
@@ -214,7 +216,7 @@ export default function RecipeStepsScreen() {
           <Text className={`ml-2 font-semibold ${
             currentStepIndex === 0 ? 'text-gray-400' : 'text-primary'
           }`}>
-            Anterior
+            {t('common.previous')}
           </Text>
         </Pressable>
 
@@ -223,7 +225,7 @@ export default function RecipeStepsScreen() {
             onPress={() => router.back()}
             className="flex-row items-center px-6 py-3 rounded-lg bg-primary"
           >
-            <Text className="font-semibold text-white">Finalizar</Text>
+            <Text className="font-semibold text-white">{t('common.finish')}</Text>
             <Ionicons name="checkmark" size={20} color="white" className="ml-2" />
           </Pressable>
         ) : (
@@ -231,7 +233,7 @@ export default function RecipeStepsScreen() {
             onPress={goToNextStep}
             className="flex-row items-center px-6 py-3 rounded-lg bg-primary"
           >
-            <Text className="font-semibold text-white">Próximo</Text>
+            <Text className="font-semibold text-white">{t('common.next')}</Text>
             <Ionicons name="chevron-forward" size={20} color="white" className="ml-2" />
           </Pressable>
         )}

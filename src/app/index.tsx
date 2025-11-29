@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Pressable,
-  RefreshControl,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    Pressable,
+    RefreshControl,
+    Text,
+    View,
 } from 'react-native';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
@@ -19,6 +20,7 @@ import { getRecipeDetail, listPublicRecipes, RecipeBrief } from '../services/rec
 import { colors } from '../theme/colors';
 
 export default function Home() {
+  const { t } = useTranslation();
   const { me, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,10 +81,10 @@ export default function Home() {
             </View>
             <View>
               <Text className="text-base text-gray-500">
-                Olá, {me?.name?.split(' ')[0] || 'Chef'}
+                {t('home.welcome', { name: me?.name?.split(' ')[0] || 'Chef' })}
               </Text>
               <Text className="text-base font-medium text-gray-900">
-                O que vamos cozinhar hoje?
+                {t('home.subtitle')}
               </Text>
             </View>
           </View>
@@ -102,22 +104,22 @@ export default function Home() {
         >
           <Ionicons name="search-outline" size={20} color="#6B7280" />
           <Text className="flex-1 py-2 ml-3 text-base text-gray-500">
-            Buscar receitas, ingredientes
+            {t('search.placeholder')}
           </Text>
         </Pressable>
 
-         <Text className="mt-6 mb-4 text-lg font-semibold">Para você</Text>
+         <Text className="mt-6 mb-4 text-lg font-semibold">{t('home.forYou')}</Text>
          
          <Pressable
            onPress={() => router.push('/recipes/new')}
            className="flex-row justify-center items-center px-4 py-3 mb-4 rounded-lg bg-primary"
          >
            <Ionicons name="add" size={20} color="#fff" />
-           <Text className="ml-2 font-semibold text-white">Nova Receita</Text>
+           <Text className="ml-2 font-semibold text-white">{t('recipe.new')}</Text>
          </Pressable>
         </View>
       ),
-      [me?.name]
+      [me?.name, t]
     );
 
 
@@ -137,8 +139,8 @@ export default function Home() {
       <View className="flex-1 bg-white">
         {header}
         <EmptyState
-          title="Nenhuma receita encontrada"
-          description="Ainda não há receitas disponíveis. Que tal ser o primeiro a compartilhar uma receita deliciosa?"
+          title={t('home.empty.title')}
+          description={t('home.empty.description')}
           icon="restaurant-outline"
         />
         <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />

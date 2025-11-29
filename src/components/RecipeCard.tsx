@@ -1,8 +1,8 @@
-import React, { memo, useState } from 'react';
-import { View, Text, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { addFavorite, removeFavorite, RecipeBrief } from '../services/recipes';
+import React, { memo, useState } from 'react';
+import { Image, Pressable, Text, View } from 'react-native';
+import { addFavorite, RecipeBrief, removeFavorite } from '../services/recipes';
 
 type Props = {
   recipe: RecipeBrief & { _cover?: string | null };
@@ -66,10 +66,12 @@ export const RecipeCard = memo(function RecipeCard({ recipe, onFavoriteToggle }:
           }}
         >
           <Text className="mb-2 text-xl font-semibold text-white">{recipe.title}</Text>
-          <View className="flex-row items-center">
-            <Ionicons name="heart" size={16} color="#FF6B6B" />
-            <Text className="ml-2 text-base font-medium text-white">TESTE</Text>
-          </View>
+          {recipe.author?.name && (
+            <View className="flex-row items-center">
+              <Ionicons name="person-outline" size={16} color="#fff" />
+              <Text className="ml-2 text-base font-medium text-white">{recipe.author.name}</Text>
+            </View>
+          )}
         </View>
       </View>
     </Pressable>

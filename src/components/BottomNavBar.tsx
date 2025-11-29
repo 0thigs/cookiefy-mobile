@@ -1,5 +1,6 @@
-import { View, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
@@ -15,41 +16,42 @@ type Props = {
   onTabPress?: (tabId: string) => void;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  {
-    id: 'home',
-    label: 'Início',
-    icon: 'home-outline',
-    activeIcon: 'home',
-  },
-  {
-    id: 'search',
-    label: 'Buscar',
-    icon: 'search-outline',
-    activeIcon: 'search',
-  },
-  {
-    id: 'shoppingList',
-    label: 'Lista',
-    icon: 'cart-outline',
-    activeIcon: 'cart',
-  },
-  {
-    id: 'favorites',
-    label: 'Favoritos',
-    icon: 'heart-outline',
-    activeIcon: 'heart',
-  },
-  {
-    id: 'profile',
-    label: 'Perfil',
-    icon: 'person-outline',
-    activeIcon: 'person',
-  },
-];
-
 export function BottomNavBar({ activeTab = 'home', onTabPress }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+
+  const NAV_ITEMS: NavItem[] = [
+    {
+      id: 'home',
+      label: t('tabs.home'),
+      icon: 'home-outline',
+      activeIcon: 'home',
+    },
+    {
+      id: 'search',
+      label: t('tabs.search'),
+      icon: 'search-outline',
+      activeIcon: 'search',
+    },
+    {
+      id: 'shoppingList',
+      label: t('tabs.shoppingList'),
+      icon: 'cart-outline',
+      activeIcon: 'cart',
+    },
+    {
+      id: 'favorites',
+      label: t('tabs.favorites'),
+      icon: 'heart-outline',
+      activeIcon: 'heart',
+    },
+    {
+      id: 'profile',
+      label: t('tabs.profile'),
+      icon: 'person-outline',
+      activeIcon: 'person',
+    },
+  ];
 
   return (
     <View
@@ -86,3 +88,4 @@ export function BottomNavBar({ activeTab = 'home', onTabPress }: Props) {
     </View>
   );
 }
+

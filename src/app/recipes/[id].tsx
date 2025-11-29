@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +29,7 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function RecipeDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { me } = useAuth();
   const { handleTabPress } = useNavigation();
@@ -82,7 +84,7 @@ export default function RecipeDetailScreen() {
       }
     } catch (error: any) {
       console.error('Erro ao carregar receita:', error);
-      Alert.alert('Erro', 'Não foi possível carregar a receita');
+      Alert.alert(t('common.error'), t('recipe.loadError'));
       router.back();
     } finally {
       setLoading(false);
@@ -102,7 +104,7 @@ export default function RecipeDetailScreen() {
         setRecipe(prev => prev ? { ...prev, isFavorited: true } : null);
       }
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível atualizar os favoritos');
+      Alert.alert(t('common.error'), t('recipe.favoriteError'));
     } finally {
       setFavoriteLoading(false);
     }
@@ -113,7 +115,7 @@ export default function RecipeDetailScreen() {
     
     try {
       await Share.share({
-        message: `Confira esta receita deliciosa: ${recipe.title}`,
+        message: t('recipe.shareMessage', { title: recipe.title }),
         title: recipe.title,
       });
     } catch (error) {
@@ -124,7 +126,7 @@ export default function RecipeDetailScreen() {
   async function handleDownloadPdf() {
     if (!recipe?.id) return;
     if (!API_BASE_URL) {
-      Alert.alert('Erro', 'Configuração de API inválida');
+      Alert.alert(t('common.error'), t('common.error'));
       return;
     }
     try {
@@ -133,16 +135,16 @@ export default function RecipeDetailScreen() {
       await Linking.openURL(url);
     } catch (error: any) {
       console.error('Erro ao abrir PDF:', error);
-      Alert.alert('Erro', 'Não foi possível abrir o PDF da receita');
+      Alert.alert(t('common.error'), t('recipe.pdfError'));
     }
   }
 
   function getDifficultyText(difficulty?: string) {
     switch (difficulty) {
-      case 'EASY': return 'Fácil';
-      case 'MEDIUM': return 'Média';
-      case 'HARD': return 'Difícil';
-      default: return 'Não informado';
+      case 'EASY': return t('recipe.difficulty.easy');
+      case 'MEDIUM': return t('recipe.difficulty.medium');
+      case 'HARD': return t('recipe.difficulty.hard');
+      default: return t('common.unknown');
     }
   }
 
@@ -156,7 +158,7 @@ export default function RecipeDetailScreen() {
   }
 
   function formatDuration(minutes?: number | null) {
-    if (!minutes) return 'Não informado';
+    if (!minutes) return t('common.unknown');
     if (minutes < 60) return `${minutes}min`;
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
@@ -175,15 +177,15 @@ export default function RecipeDetailScreen() {
     try {
       const result = await addRecipeToList(recipe.id);
       Alert.alert(
-        'Sucesso!',
-        `${result.count} ${result.count === 1 ? 'ingrediente adicionado' : 'ingredientes adicionados'} à lista de compras`,
+        t('common.success'),
+        t('recipe.addedIngredients', { count: result.count }),
         [
           { text: 'OK' },
-          { text: 'Ver Lista', onPress: () => router.push('/shopping-list') }
+          { text: t('recipe.viewList'), onPress: () => router.push('/shopping-list') }
         ]
       );
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível adicionar os ingredientes à lista');
+      Alert.alert(t('common.error'), t('recipe.addListError'));
     } finally {
       setAddingToList(false);
     }
@@ -204,15 +206,15 @@ export default function RecipeDetailScreen() {
         unit: ingredient.unit || 'un',
       });
       Alert.alert(
-        'Adicionado!',
-        `${ingredient.name} foi adicionado à lista de compras`,
+        t('common.success'),
+        t('recipe.addedIngredient', { name: ingredient.name }),
         [
           { text: 'OK' },
-          { text: 'Ver Lista', onPress: () => router.push('/shopping-list') }
+          { text: t('recipe.viewList'), onPress: () => router.push('/shopping-list') }
         ]
       );
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível adicionar o ingrediente à lista');
+      Alert.alert(t('common.error'), t('recipe.addListError'));
     } finally {
       setAddingToList(false);
     }
@@ -223,7 +225,7 @@ export default function RecipeDetailScreen() {
       <View className="flex-1 bg-white">
         <View className="items-center justify-center flex-1">
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text className="mt-4 text-gray-600">Carregando receita...</Text>
+          <Text className="mt-4 text-gray-600">{t('recipe.loading')}</Text>
         </View>
       </View>
     );
@@ -234,15 +236,15 @@ export default function RecipeDetailScreen() {
       <View className="flex-1 bg-white">
         <View className="items-center justify-center flex-1 px-8">
           <Ionicons name="restaurant-outline" size={64} color={colors.muted} />
-          <Text className="mt-4 text-lg font-semibold text-gray-900">Receita não encontrada</Text>
+          <Text className="mt-4 text-lg font-semibold text-gray-900">{t('recipe.notFound')}</Text>
           <Text className="mt-2 text-center text-gray-600">
-            A receita que você está procurando não existe ou foi removida.
+            {t('recipe.notFoundDesc')}
           </Text>
           <Pressable
             onPress={() => router.back()}
             className="px-6 py-3 mt-6 rounded-lg bg-primary"
           >
-            <Text className="font-semibold text-white">Voltar</Text>
+            <Text className="font-semibold text-white">{t('common.back')}</Text>
           </Pressable>
         </View>
       </View>
@@ -347,7 +349,7 @@ export default function RecipeDetailScreen() {
                       textShadowRadius: 2,
                     }}
                   >
-                    {formatDuration(recipe.prepMinutes)} prep
+                    {formatDuration(recipe.prepMinutes)} {t('recipe.prep')}
                   </Text>
                 </View>
                 
@@ -361,7 +363,7 @@ export default function RecipeDetailScreen() {
                       textShadowRadius: 2,
                     }}
                   >
-                    {formatDuration(recipe.cookMinutes)} cozimento
+                    {formatDuration(recipe.cookMinutes)} {t('recipe.cook')}
                   </Text>
                 </View>
                 
@@ -375,7 +377,7 @@ export default function RecipeDetailScreen() {
                       textShadowRadius: 2,
                     }}
                   >
-                    {recipe.servings || 'N/A'} porções
+                    {recipe.servings || 'N/A'} {t('recipe.servings')}
                   </Text>
                 </View>
               </View>
@@ -396,7 +398,7 @@ export default function RecipeDetailScreen() {
               selectedTab === 'details' ? 'text-primary' : 'text-gray-500'
             }`}
           >
-            Detalhes
+            {t('recipe.details')}
           </Text>
         </Pressable>
         <Pressable
@@ -410,7 +412,7 @@ export default function RecipeDetailScreen() {
               selectedTab === 'reviews' ? 'text-primary' : 'text-gray-500'
             }`}
           >
-            Avaliações
+            {t('recipe.reviews')}
           </Text>
         </Pressable>
       </View>
@@ -445,7 +447,7 @@ export default function RecipeDetailScreen() {
             {/* Dificuldade e categorias */}
             <View className="mb-6">
               <View className="flex-row items-center mb-3">
-                <Text className="mr-3 text-lg font-semibold text-gray-900">Dificuldade:</Text>
+                <Text className="mr-3 text-lg font-semibold text-gray-900">{t('recipe.difficulty.label')}:</Text>
                 <View 
                   className="px-3 py-1 rounded-full"
                   style={{ backgroundColor: getDifficultyColor(recipe.difficulty) + '20' }}
@@ -476,30 +478,30 @@ export default function RecipeDetailScreen() {
             {/* Informações nutricionais */}
             {recipe.nutrition && (
               <View className="mb-6">
-                <Text className="mb-3 text-lg font-semibold text-gray-900">Informações Nutricionais</Text>
+                <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.nutrition')}</Text>
                 <View className="p-4 rounded-lg bg-gray-50">
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-600">Calorias:</Text>
+                    <Text className="text-gray-600">{t('recipe.calories')}:</Text>
                     <Text className="font-medium">{formatNutritionValue(recipe.nutrition.calories, ' kcal')}</Text>
                   </View>
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-600">Proteína:</Text>
+                    <Text className="text-gray-600">{t('recipe.protein')}:</Text>
                     <Text className="font-medium">{formatNutritionValue(recipe.nutrition.protein, 'g')}</Text>
                   </View>
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-600">Carboidratos:</Text>
+                    <Text className="text-gray-600">{t('recipe.carbs')}:</Text>
                     <Text className="font-medium">{formatNutritionValue(recipe.nutrition.carbs, 'g')}</Text>
                   </View>
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-600">Gorduras:</Text>
+                    <Text className="text-gray-600">{t('recipe.fat')}:</Text>
                     <Text className="font-medium">{formatNutritionValue(recipe.nutrition.fat, 'g')}</Text>
                   </View>
                   <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-600">Fibra:</Text>
+                    <Text className="text-gray-600">{t('recipe.fiber')}:</Text>
                     <Text className="font-medium">{formatNutritionValue(recipe.nutrition.fiber, 'g')}</Text>
                   </View>
                   <View className="flex-row justify-between">
-                    <Text className="text-gray-600">Sódio:</Text>
+                    <Text className="text-gray-600">{t('recipe.sodium')}:</Text>
                     <Text className="font-medium">{formatNutritionValue(recipe.nutrition.sodium, 'mg')}</Text>
                   </View>
                 </View>
@@ -510,7 +512,7 @@ export default function RecipeDetailScreen() {
             {recipe.ingredients && recipe.ingredients.length > 0 && (
               <View className="mb-6">
                 <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-lg font-semibold text-gray-900">Ingredientes</Text>
+                  <Text className="text-lg font-semibold text-gray-900">{t('recipe.ingredients')}</Text>
                   <Pressable
                     onPress={handleAddAllIngredientsToList}
                     disabled={addingToList}
@@ -522,7 +524,7 @@ export default function RecipeDetailScreen() {
                       <>
                         <Ionicons name="cart-outline" size={16} color="white" />
                         <Text className="ml-2 text-sm font-semibold text-white">
-                          Adicionar Todos
+                          {t('recipe.addAll')}
                         </Text>
                       </>
                     )}
@@ -555,7 +557,7 @@ export default function RecipeDetailScreen() {
             {recipe.steps && recipe.steps.length > 0 && (
               <View className="mb-6">
                 <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-lg font-semibold text-gray-900">Modo de Preparo</Text>
+                  <Text className="text-lg font-semibold text-gray-900">{t('recipe.preparation')}</Text>
                   <Pressable
                     onPress={() => router.push({
                       pathname: `/recipes/${id}/steps`,
@@ -567,7 +569,7 @@ export default function RecipeDetailScreen() {
                     className="flex-row items-center px-4 py-2 rounded-lg bg-primary"
                   >
                     <Ionicons name="play-outline" size={16} color="white" />
-                    <Text className="ml-2 font-semibold text-white">Modo Passo a Passo</Text>
+                    <Text className="ml-2 font-semibold text-white">{t('recipe.startMode')}</Text>
                   </Pressable>
                 </View>
                 <View className="space-y-4">
@@ -594,7 +596,7 @@ export default function RecipeDetailScreen() {
             {/* Fotos adicionais */}
             {recipe.photos && recipe.photos.length > 1 && (
               <View className="mb-6">
-                <Text className="mb-3 text-lg font-semibold text-gray-900">Mais Fotos</Text>
+                <Text className="mb-3 text-lg font-semibold text-gray-900">{t('recipe.morePhotos')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {recipe.photos.slice(1).map((photo, index) => (
                     <Image

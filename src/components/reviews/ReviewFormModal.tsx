@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { StarRating } from './StarRating';
-import { colors } from '../../theme/colors';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
 import type { Review } from '../../services/reviews';
+import { colors } from '../../theme/colors';
+import { StarRating } from './StarRating';
 
 interface ReviewFormModalProps {
   visible: boolean;
@@ -28,6 +29,7 @@ export function ReviewFormModal({
   onSubmit,
   initialReview,
 }: ReviewFormModalProps) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(initialReview?.rating || 5);
   const [comment, setComment] = useState(initialReview?.comment || '');
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +44,7 @@ export function ReviewFormModal({
 
   async function handleSubmit() {
     if (rating === 0) {
-      Alert.alert('Atenção', 'Por favor, selecione uma nota de 1 a 5 estrelas.');
+      Alert.alert(t('common.attention'), t('reviews.selectRating'));
       return;
     }
 
@@ -51,7 +53,7 @@ export function ReviewFormModal({
       await onSubmit(rating, comment.trim());
       handleClose();
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Não foi possível salvar a avaliação');
+      Alert.alert(t('common.error'), error.message || t('reviews.saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -80,7 +82,7 @@ export function ReviewFormModal({
               {/* Header */}
               <View className="flex-row justify-between items-center p-6 border-b border-gray-200">
                 <Text className="text-xl font-bold text-gray-900">
-                  {initialReview ? 'Editar Avaliação' : 'Avaliar Receita'}
+                  {initialReview ? t('reviews.editReview') : t('reviews.rateRecipe')}
                 </Text>
                 <Pressable onPress={handleClose} disabled={submitting}>
                   <Ionicons name="close" size={28} color={colors.muted} />
@@ -92,7 +94,7 @@ export function ReviewFormModal({
                 {/* Rating */}
                 <View className="mb-6">
                   <Text className="mb-3 text-base font-semibold text-gray-900">
-                    Sua nota
+                    {t('reviews.yourRating')}
                   </Text>
                   <View className="flex-row justify-center py-4">
                     <StarRating
@@ -102,23 +104,23 @@ export function ReviewFormModal({
                     />
                   </View>
                   <Text className="text-center text-sm text-gray-600">
-                    {rating === 1 && 'Muito ruim'}
-                    {rating === 2 && 'Ruim'}
-                    {rating === 3 && 'Regular'}
-                    {rating === 4 && 'Bom'}
-                    {rating === 5 && 'Excelente'}
+                    {rating === 1 && t('reviews.veryBad')}
+                    {rating === 2 && t('reviews.bad')}
+                    {rating === 3 && t('reviews.regular')}
+                    {rating === 4 && t('reviews.good')}
+                    {rating === 5 && t('reviews.excellent')}
                   </Text>
                 </View>
 
                 {/* Comment */}
                 <View className="mb-6">
                   <Text className="mb-2 text-base font-semibold text-gray-900">
-                    Comentário <Text className="text-gray-500">(opcional)</Text>
+                    {t('reviews.comment')} <Text className="text-gray-500">{t('common.optional')}</Text>
                   </Text>
                   <TextInput
                     value={comment}
                     onChangeText={setComment}
-                    placeholder="Conte sobre sua experiência com esta receita..."
+                    placeholder={t('reviews.commentPlaceholder')}
                     placeholderTextColor={colors.muted}
                     multiline
                     numberOfLines={4}
@@ -139,7 +141,7 @@ export function ReviewFormModal({
                     disabled={submitting}
                     className="flex-1 justify-center items-center py-4 bg-gray-100 rounded-lg"
                   >
-                    <Text className="font-semibold text-gray-700">Cancelar</Text>
+                    <Text className="font-semibold text-gray-700">{t('common.cancel')}</Text>
                   </Pressable>
                   <Pressable
                     onPress={handleSubmit}
@@ -149,7 +151,7 @@ export function ReviewFormModal({
                     }`}
                   >
                     <Text className="font-semibold text-white">
-                      {submitting ? 'Salvando...' : 'Salvar'}
+                      {submitting ? t('common.saving') : t('common.save')}
                     </Text>
                   </Pressable>
                 </View>

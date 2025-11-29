@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, Alert, TextInput } from 'react-native';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { listPendingRecipes, listAllRecipesAdmin, moderateRecipe } from '../../services/admin';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { listAllRecipesAdmin, listPendingRecipes, moderateRecipe } from '../../services/admin';
+import type { RecipeBrief } from '../../services/recipes';
 import { deleteRecipe } from '../../services/recipes';
 import { colors } from '../../theme/colors';
-import type { RecipeBrief } from '../../services/recipes';
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'PENDING' | 'ALL'>('PENDING');
   const [recipes, setRecipes] = useState<RecipeBrief[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function AdminDashboard() {
       setHasMore(res.data.length >= 20);
       setPage(p);
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao carregar receitas');
+      Alert.alert(t('common.error'), t('admin.loadError'));
     } finally {
       setLoading(false);
     }
@@ -46,23 +48,26 @@ export default function AdminDashboard() {
   async function handleModerate(id: string, status: 'PUBLISHED' | 'REJECTED') {
     try {
       await moderateRecipe(id, status);
-      Alert.alert('Sucesso', `Receita ${status === 'PUBLISHED' ? 'aprovada' : 'rejeitada'}`);
+      Alert.alert(
+        t('common.success'), 
+        status === 'PUBLISHED' ? t('admin.approvedSuccess') : t('admin.rejectedSuccess')
+      );
       load(true);
     } catch {
-      Alert.alert('Erro', 'Falha na moderação');
+      Alert.alert(t('common.error'), t('admin.moderationError'));
     }
   }
 
   async function handleDelete(id: string) {
-    Alert.alert('Excluir', 'Tem certeza absoluta? Essa ação não pode ser desfeita.', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t('common.delete'), t('admin.deleteConfirmDesc'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Excluir', style: 'destructive', onPress: async () => {
+        text: t('common.delete'), style: 'destructive', onPress: async () => {
           try {
             await deleteRecipe(id);
             setRecipes(prev => prev.filter(r => r.id !== id));
           } catch {
-            Alert.alert('Erro', 'Falha ao excluir');
+            Alert.alert(t('common.error'), t('admin.deleteError'));
           }
         }
       }
@@ -75,9 +80,9 @@ export default function AdminDashboard() {
 
   const getStatusBadge = (status?: string) => {
     switch(status) {
-      case 'PUBLISHED': return <View className="px-2 py-1 bg-green-100 rounded"><Text className="text-xs font-bold text-green-700">Publicada</Text></View>;
-      case 'REJECTED': return <View className="px-2 py-1 bg-red-100 rounded"><Text className="text-xs font-bold text-red-700">Rejeitada</Text></View>;
-      default: return <View className="px-2 py-1 bg-yellow-100 rounded"><Text className="text-xs font-bold text-yellow-700">Rascunho</Text></View>;
+      case 'PUBLISHED': return <View className="px-2 py-1 bg-green-100 rounded"><Text className="text-xs font-bold text-green-700">{t('admin.published')}</Text></View>;
+      case 'REJECTED': return <View className="px-2 py-1 bg-red-100 rounded"><Text className="text-xs font-bold text-red-700">{t('admin.rejected')}</Text></View>;
+      default: return <View className="px-2 py-1 bg-yellow-100 rounded"><Text className="text-xs font-bold text-yellow-700">{t('admin.draft')}</Text></View>;
     }
   }
 
@@ -86,7 +91,7 @@ export default function AdminDashboard() {
       <View className="flex-row items-start justify-between mb-2">
         <View className="flex-1 pr-2">
           <Text className="text-lg font-bold text-gray-800">{item.title}</Text>
-          <Text className="text-sm text-gray-500">Por: {item.author?.name || 'Desconhecido'}</Text>
+          <Text className="text-sm text-gray-500">{t('common.by')}: {item.author?.name || t('common.unknown')}</Text>
         </View>
         {getStatusBadge(item.status)}
       </View>
@@ -94,24 +99,24 @@ export default function AdminDashboard() {
       {tab === 'PENDING' ? (
         <View className="flex-row gap-3 pt-2 mt-2 border-t border-gray-100">
            <Pressable onPress={() => router.push(`/recipes/${item.id}`)} className="items-center flex-1 py-2 border border-gray-300 rounded-lg">
-             <Text className="font-medium text-gray-700">Ver</Text>
+             <Text className="font-medium text-gray-700">{t('admin.view')}</Text>
            </Pressable>
            <Pressable onPress={() => handleModerate(item.id, 'REJECTED')} className="items-center flex-1 py-2 bg-red-100 rounded-lg">
-             <Text className="font-bold text-red-700">Rejeitar</Text>
+             <Text className="font-bold text-red-700">{t('admin.reject')}</Text>
            </Pressable>
            <Pressable onPress={() => handleModerate(item.id, 'PUBLISHED')} className="items-center flex-1 py-2 bg-green-100 rounded-lg">
-             <Text className="font-bold text-green-700">Aprovar</Text>
+             <Text className="font-bold text-green-700">{t('admin.approve')}</Text>
            </Pressable>
         </View>
       ) : (
         <View className="flex-row gap-3 pt-2 mt-2 border-t border-gray-100">
            <Pressable onPress={() => handleEdit(item.id)} className="flex-row items-center justify-center flex-1 gap-2 py-2 rounded-lg bg-blue-50">
              <Ionicons name="create-outline" size={16} color="#2563EB" />
-             <Text className="font-medium text-blue-700">Editar</Text>
+             <Text className="font-medium text-blue-700">{t('common.edit')}</Text>
            </Pressable>
            <Pressable onPress={() => handleDelete(item.id)} className="flex-row items-center justify-center flex-1 gap-2 py-2 rounded-lg bg-red-50">
              <Ionicons name="trash-outline" size={16} color="#DC2626" />
-             <Text className="font-medium text-red-700">Excluir</Text>
+             <Text className="font-medium text-red-700">{t('common.delete')}</Text>
            </Pressable>
         </View>
       )}
@@ -125,7 +130,7 @@ export default function AdminDashboard() {
           <Pressable onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </Pressable>
-          <Text className="text-xl font-bold text-gray-900">Gestão de Receitas</Text>
+          <Text className="text-xl font-bold text-gray-900">{t('admin.title')}</Text>
         </View>
 
         {/* Tabs */}
@@ -135,7 +140,7 @@ export default function AdminDashboard() {
             className={`flex-1 pb-3 border-b-2 ${tab === 'PENDING' ? 'border-primary' : 'border-transparent'}`}
           >
             <Text className={`text-center font-bold ${tab === 'PENDING' ? 'text-primary' : 'text-gray-500'}`}>
-              Pendentes
+              {t('admin.pending')}
             </Text>
           </Pressable>
           <Pressable 
@@ -143,7 +148,7 @@ export default function AdminDashboard() {
             className={`flex-1 pb-3 border-b-2 ${tab === 'ALL' ? 'border-primary' : 'border-transparent'}`}
           >
             <Text className={`text-center font-bold ${tab === 'ALL' ? 'text-primary' : 'text-gray-500'}`}>
-              Todas
+              {t('admin.all')}
             </Text>
           </Pressable>
         </View>
@@ -154,7 +159,7 @@ export default function AdminDashboard() {
           <View className="flex-row items-center px-3 py-2 bg-gray-100 rounded-lg">
             <Ionicons name="search" size={20} color="#9CA3AF" />
             <TextInput 
-              placeholder="Buscar por título ou autor..." 
+              placeholder={t('admin.searchPlaceholder')}
               className="flex-1 ml-2"
               value={search}
               onChangeText={setSearch}
@@ -177,7 +182,7 @@ export default function AdminDashboard() {
           onEndReached={() => { if (hasMore) setPage(p => p + 1); }}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={
-            <Text className="mt-10 text-center text-gray-500">Nenhuma receita encontrada.</Text>
+            <Text className="mt-10 text-center text-gray-500">{t('admin.noRecipes')}</Text>
           }
         />
       )}
