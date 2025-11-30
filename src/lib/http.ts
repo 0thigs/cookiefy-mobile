@@ -1,6 +1,6 @@
 import { clearSession, getAccessToken, setAccessToken } from '../hooks/auth-client';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://cookiefy-server.onrender.com';
 
 async function core(path: string, init: RequestInit & { _retry?: boolean } = {}) {
   const token = await getAccessToken();

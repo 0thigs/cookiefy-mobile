@@ -24,7 +24,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '../../hooks/useNavigation';
 import { colors } from '../../theme/colors';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://cookiefy-server.onrender.com;
 
 const { width: screenWidth } = Dimensions.get('window');
 

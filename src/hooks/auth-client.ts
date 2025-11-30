@@ -4,7 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import i18n from '../i18n';
 import { supabase } from '../lib/supabase';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://cookiefy-server.onrender.com';
 
 if (!API_BASE_URL) {
   throw new Error('A variável EXPO_PUBLIC_API_URL não foi definida no .env');

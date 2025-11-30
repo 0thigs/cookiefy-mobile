@@ -1,7 +1,7 @@
 // src/lib/config.ts
 
 // Pega do .env automaticamente (Expo injeta variáveis EXPO_PUBLIC_)
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'https://cookiefy-server.onrender.com';
 
 if (!apiUrl) {
   throw new Error('Defina EXPO_PUBLIC_API_URL no arquivo .env');
