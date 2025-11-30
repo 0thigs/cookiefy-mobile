@@ -6,7 +6,7 @@ import { setAccessToken } from '../../hooks/auth-client';
 import i18n from '../../i18n';
 import { supabase } from '../../lib/supabase';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://cookiefy-server.onrender.com';;
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
