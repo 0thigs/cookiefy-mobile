@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    Pressable,
-    RefreshControl,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
 } from 'react-native';
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
@@ -33,7 +33,6 @@ export default function Home() {
     if (initial) setLoading(true);
     try {
       const res = await listPublicRecipes({ page: 1, pageSize: 10 });
-      console.log(res.data);
       const first = res.data.slice(0, 6);
       const details = await Promise.allSettled(
         first.map((r: RecipeBrief) => getRecipeDetail(r.id))
@@ -70,9 +69,9 @@ export default function Home() {
   const header = useMemo(
     () => (
       <View className="px-3 pt-4 pb-3 bg-white">
-        <View className="flex-row justify-between items-center mb-4">
+        <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
-            <View className="justify-center items-center mr-3 w-10 h-10 rounded-full">
+            <View className="items-center justify-center w-10 h-10 mr-3 rounded-full">
               <Image
                 source={require('../../assets/images/logo.png')}
                 style={{ width: 60, height: 60 }}
@@ -88,11 +87,11 @@ export default function Home() {
               </Text>
             </View>
           </View>
-          <View className="flex-row gap-3 items-center">
-            <Pressable className="justify-center items-center w-12 h-12">
+          <View className="flex-row items-center gap-3">
+            <Pressable className="items-center justify-center w-12 h-12">
               <Ionicons name="notifications-outline" size={24} color={colors.text} />
             </Pressable>
-            <Pressable className="justify-center items-center w-12 h-12" onPress={() => router.push('/settings')}>
+            <Pressable className="items-center justify-center w-12 h-12" onPress={() => router.push('/settings')}>
               <Ionicons name="settings-outline" size={24} color={colors.text} />
             </Pressable>
           </View>
@@ -112,7 +111,7 @@ export default function Home() {
          
          <Pressable
            onPress={() => router.push('/recipes/new')}
-           className="flex-row justify-center items-center px-4 py-3 mb-4 rounded-lg bg-primary"
+           className="flex-row items-center justify-center px-4 py-3 mb-4 rounded-lg bg-primary"
          >
            <Ionicons name="add" size={20} color="#fff" />
            <Text className="ml-2 font-semibold text-white">{t('recipe.new')}</Text>
@@ -126,7 +125,7 @@ export default function Home() {
   if (loading) {
     return (
       <View className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center">
+        <View className="items-center justify-center flex-1">
           <ActivityIndicator />
         </View>
         <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />

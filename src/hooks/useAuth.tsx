@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signUp(name: string, email: string, password: string) {
     await apiSignUp(name, email, password);
     const user = await apiFetchMe();
-    console.log('user', user);
+    // console.log('user', user);
     setMe(user);
     router.replace('/');
   }
@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     await apiSignInWithGoogle();
     const user = await apiFetchMe();
+    console.log('user', user);
     setMe(user);
     router.replace('/');
   }
