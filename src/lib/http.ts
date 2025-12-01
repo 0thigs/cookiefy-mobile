@@ -25,7 +25,9 @@ async function core(path: string, init: RequestInit & { _retry?: boolean } = {})
     throw new Error(msg || `HTTP ${res.status}`);
   }
 
-  return res.status === 204 ? null : res.json();
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function refresh() {

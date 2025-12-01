@@ -14,6 +14,7 @@ import {
 import { BottomNavBar } from '../components/BottomNavBar';
 import { EmptyState } from '../components/EmptyState';
 import { RecipeCard } from '../components/RecipeCard';
+import { useNotification } from '../hooks/use-notification';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
 import { getRecipeDetail, listPublicRecipes, RecipeBrief } from '../services/recipes';
@@ -26,6 +27,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [feed, setFeed] = useState<(RecipeBrief & { _cover?: string | null })[]>([]);
+ const {login} =  useNotification();
   
   const { handleTabPress } = useNavigation();
 
@@ -50,7 +52,10 @@ export default function Home() {
           _cover: coverMap.get(r.id) ?? r.coverUrl ?? null,
           isFavorited: r.isFavorited || false, // Inclui status de favorito
         }))
+      
+
       );
+      if (me) login(me.id)
     } finally {
       if (initial) setLoading(false);
     }

@@ -1,17 +1,18 @@
+import { sendNotification } from '@/src/services/notifications';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    ScrollView,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { z } from 'zod';
 import { listCategories, type Category } from '../../services/categories';
@@ -305,6 +306,7 @@ export default function NewRecipeScreen() {
         console.log('Create recipe response:', created);
         if (form.publishNow) {
           await publishRecipe(created.id);
+          await sendNotification();
         }
         Alert.alert(t('common.success'), t('recipe.created'), [
           { text: 'OK', onPress: () => router.replace('/') },
@@ -332,7 +334,7 @@ export default function NewRecipeScreen() {
     <ScrollView
       className="flex-1 bg-white"
       contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-      <Text className="mb-3 text-center text-2xl font-bold">{t('recipe.newRecipe')}</Text>
+      <Text className="mb-3 text-2xl font-bold text-center">{t('recipe.newRecipe')}</Text>
 
       <Text className="mb-1 font-medium">{t('recipe.title')} *</Text>
       <Controller
@@ -340,14 +342,14 @@ export default function NewRecipeScreen() {
         name="title"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="mb-1 w-full rounded-lg border border-gray-300 px-4 py-3"
+            className="w-full px-4 py-3 mb-1 border border-gray-300 rounded-lg"
             placeholder={t('recipe.titlePlaceholder')}
             value={value}
             onChangeText={onChange}
           />
         )}
       />
-      {errors.title && <Text className="text-danger mb-3">{errors.title.message}</Text>}
+      {errors.title && <Text className="mb-3 text-danger">{errors.title.message}</Text>}
 
       <Text className="mb-1 font-medium">{t('recipe.description')}</Text>
       <Controller
@@ -355,7 +357,7 @@ export default function NewRecipeScreen() {
         name="description"
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="mb-3 w-full rounded-lg border border-gray-300 px-4 py-3"
+            className="w-full px-4 py-3 mb-3 border border-gray-300 rounded-lg"
             placeholder={t('recipe.descriptionPlaceholder')}
             value={value}
             onChangeText={onChange}
@@ -365,7 +367,7 @@ export default function NewRecipeScreen() {
       />
 
       <Text className="mb-1 font-medium">{t('recipe.difficulty.label')}</Text>
-      <View className="mb-3 flex-row">
+      <View className="flex-row mb-3">
         {(['EASY', 'MEDIUM', 'HARD'] as const).map((d) => (
           <Controller
             key={d}
@@ -542,7 +544,7 @@ export default function NewRecipeScreen() {
             name="nutrition.fiber"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="mb-3 w-full rounded-lg border border-gray-300 px-4 py-3"
+                className="w-full px-4 py-3 mb-3 border border-gray-300 rounded-lg"
                 placeholder="ex.: 5"
                 keyboardType="decimal-pad"
                 value={value}
@@ -559,7 +561,7 @@ export default function NewRecipeScreen() {
             name="nutrition.sodium"
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="mb-3 w-full rounded-lg border border-gray-300 px-4 py-3"
+                className="w-full px-4 py-3 mb-3 border border-gray-300 rounded-lg"
                 placeholder="ex.: 600"
                 keyboardType="number-pad"
                 value={value}
@@ -572,14 +574,14 @@ export default function NewRecipeScreen() {
 
       <Text className="mb-2 text-lg font-semibold">{t('recipe.ingredients')} *</Text>
       {ingredients.fields.map((f, idx) => (
-        <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
+        <View key={f.id} className="p-3 mb-2 border border-gray-200 rounded-xl">
           <Text className="mb-1 font-medium">{t('recipe.ingredientName')}</Text>
           <Controller
             control={control}
             name={`ingredients.${idx}.name` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="mb-2 rounded-lg border border-gray-300 px-3 py-2"
+                className="px-3 py-2 mb-2 border border-gray-300 rounded-lg"
                 placeholder={t('recipe.ingredientNamePlaceholder')}
                 value={value}
                 onChangeText={onChange}
@@ -620,7 +622,7 @@ export default function NewRecipeScreen() {
                 name={`ingredients.${idx}.unit` as const}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
-                    className="rounded-lg border border-gray-300 px-3 py-2"
+                    className="px-3 py-2 border border-gray-300 rounded-lg"
                     placeholder={t('recipe.unitPlaceholder')}
                     value={value}
                     onChangeText={onChange}
@@ -630,28 +632,28 @@ export default function NewRecipeScreen() {
             </View>
           </View>
           <Pressable
-            className="mt-2 self-end rounded-lg border border-gray-300 px-3 py-1"
+            className="self-end px-3 py-1 mt-2 border border-gray-300 rounded-lg"
             onPress={() => ingredients.remove(idx)}>
             <Text className="text-gray-600">{t('common.remove')}</Text>
           </Pressable>
         </View>
       ))}
       <Pressable
-        className="mb-4 items-center rounded-lg border border-gray-300 py-2"
+        className="items-center py-2 mb-4 border border-gray-300 rounded-lg"
         onPress={() => ingredients.append({ name: '', amount: '', unit: '' })}>
         <Text className="font-medium text-gray-700">{t('recipe.addIngredient')}</Text>
       </Pressable>
 
       <Text className="mb-2 text-lg font-semibold">{t('recipe.preparation')} *</Text>
       {steps.fields.map((f, idx) => (
-        <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
+        <View key={f.id} className="p-3 mb-2 border border-gray-200 rounded-xl">
           <Text className="mb-1 font-medium">{t('recipe.step')} {idx + 1}</Text>
           <Controller
             control={control}
             name={`steps.${idx}.text` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="mb-2 rounded-lg border border-gray-300 px-3 py-2"
+                className="px-3 py-2 mb-2 border border-gray-300 rounded-lg"
                 placeholder={t('recipe.stepPlaceholder')}
                 value={value}
                 onChangeText={onChange}
@@ -684,28 +686,28 @@ export default function NewRecipeScreen() {
             </Text>
           )}
           <Pressable
-            className="mt-2 self-end rounded-lg border border-gray-300 px-3 py-1"
+            className="self-end px-3 py-1 mt-2 border border-gray-300 rounded-lg"
             onPress={() => steps.remove(idx)}>
             <Text className="text-gray-600">{t('common.remove')}</Text>
           </Pressable>
         </View>
       ))}
       <Pressable
-        className="mb-4 items-center rounded-lg border border-gray-300 py-2"
+        className="items-center py-2 mb-4 border border-gray-300 rounded-lg"
         onPress={() => steps.append({ text: '', durationSec: '' })}>
         <Text className="font-medium text-gray-700">{t('recipe.addStep')}</Text>
       </Pressable>
 
       <Text className="mb-2 text-lg font-semibold">{t('recipe.photos')} ({t('recipe.publicUrl')}) *</Text>
       {photos.fields.map((f, idx) => (
-        <View key={f.id} className="mb-2 rounded-xl border border-gray-200 p-3">
+        <View key={f.id} className="p-3 mb-2 border border-gray-200 rounded-xl">
           <Text className="mb-1 font-medium">URL</Text>
           <Controller
             control={control}
             name={`photos.${idx}.url` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="mb-2 rounded-lg border border-gray-300 px-3 py-2"
+                className="px-3 py-2 mb-2 border border-gray-300 rounded-lg"
                 placeholder="https://..."
                 value={value}
                 onChangeText={onChange}
@@ -724,7 +726,7 @@ export default function NewRecipeScreen() {
             name={`photos.${idx}.alt` as const}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                className="rounded-lg border border-gray-300 px-3 py-2"
+                className="px-3 py-2 border border-gray-300 rounded-lg"
                 placeholder={t('recipe.photoAltPlaceholder')}
                 value={value}
                 onChangeText={onChange}
@@ -732,20 +734,20 @@ export default function NewRecipeScreen() {
             )}
           />
           <Pressable
-            className="mt-2 self-end rounded-lg border border-gray-300 px-3 py-1"
+            className="self-end px-3 py-1 mt-2 border border-gray-300 rounded-lg"
             onPress={() => photos.remove(idx)}>
             <Text className="text-gray-600">{t('common.remove')}</Text>
           </Pressable>
         </View>
       ))}
       <Pressable
-        className="mb-4 items-center rounded-lg border border-gray-300 py-2"
+        className="items-center py-2 mb-4 border border-gray-300 rounded-lg"
         onPress={() => photos.append({ url: '', alt: '' })}>
         <Text className="font-medium text-gray-700">{t('recipe.addPhoto')}</Text>
       </Pressable>
 
       <Text className="mb-1 font-medium">{t('recipe.categories')}</Text>
-      <View className="mb-3 flex-row flex-wrap">
+      <View className="flex-row flex-wrap mb-3">
         {loadingCats ? (
           <ActivityIndicator />
         ) : (
@@ -773,7 +775,7 @@ export default function NewRecipeScreen() {
         )}
       </View>
 
-      <View className="mb-4 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between mb-4">
         <Text className="font-medium">{t('recipe.publishNow')}</Text>
         <Controller
           control={control}
@@ -784,7 +786,7 @@ export default function NewRecipeScreen() {
         />
       </View>
 
-      {errors.root && <Text className="text-danger mb-2">{String(errors.root.message)}</Text>}
+      {errors.root && <Text className="mb-2 text-danger">{String(errors.root.message)}</Text>}
 
       <Pressable
         onPress={() => {
@@ -798,7 +800,7 @@ export default function NewRecipeScreen() {
           }, 100);
         }}
         disabled={submitting}
-        className="items-center rounded-lg bg-primary py-3">
+        className="items-center py-3 rounded-lg bg-primary">
         {submitting ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -808,7 +810,7 @@ export default function NewRecipeScreen() {
 
       <Pressable
         onPress={() => router.back()}
-        className="mt-3 items-center rounded-lg border border-gray-300 py-3">
+        className="items-center py-3 mt-3 border border-gray-300 rounded-lg">
         <Text className="font-semibold text-gray-700">{t('common.cancel')}</Text>
       </Pressable>
     </ScrollView>
